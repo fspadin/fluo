@@ -1,0 +1,30 @@
+======
+fluo
+======
+
+**fluo** is a set of tools for analysis fluorescence measurements in time-domain mode. 
+
+:Author: Anna Chmielińska, <anna.chmielinska@uj.edu.pl>.
+
+
+Installation
+============
+
+* Via `pip`::
+
+    pip install fluo
+    
+* Via `setuptools`::
+
+    python setup.py
+
+fluo requires installation of the following software:
+
+* matplotlib >= 1.2.1
+* scipy >= 0.12.0
+* lmfit >= 0.7.4
+
+
+Description
+===========
+
