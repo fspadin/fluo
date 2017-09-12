@@ -28,7 +28,7 @@ def iterative_least_squares(FitterClass, iterations):
 
     Returns
     -------
-    fits : list 
+    fits : list of lmfit.ModelResult
         List with fit from every iteration.
     """
 
@@ -58,14 +58,35 @@ def make_global_lifetime_fitter(
     fit_statistic='c_statistic', 
     shared=None):
     """
+    Makes `fluo.Fitter` object for simultaneous (global) fitting multiple 
+    measurements.
 
     Parameters
     ----------
-    FitterClass : fluo.Fitter
-    iterations : int
+    local_user_kwargs : list of dict
+        List of dict with user provided info about model and fit.
+    local_times : list of ndarray
+        List of 1D ndarray with times (x-scale of data).
+    local_decays : list of ndarray
+        List of 1D ndarray with fluorescence decays (y-scale of data).
+    local_instrument_responses : list of ndarray, optional
+        List of 1D ndarray with instrument_response functions 
+        (for convolution with calculated model).
+    fit_statistic : str, optional
+        Statisic used in fitting minimization. 
+        Accepts the following str: 'c_statistic', 'chi_square_statistic', 
+        'chi_square_statistic_variable_projection'.
+    shared : list of str, optional
+        List of parameters names shared between fitted measurements.
+
+    Raises
+    ------
+    ValueError
+        If invalid `fit_statistic` is provided.
 
     Returns
     -------
+    fluo.Fitter
     """
     if local_instrument_responses is None:
         local_instrument_responses = iter([])
@@ -102,8 +123,35 @@ def make_lifetime_fitter(
     time, 
     decay, 
     instrument_response=None, 
-    fit_statistic='c_statistic',
-    fit_kwargs=None):
+    fit_statistic='c_statistic'):
+    """
+    Makes `fluo.Fitter` object for fitting a single measurement.
+
+    Parameters
+    ----------
+    user_kwargs : dict
+        Dict with user provided info about model and fit.
+    time : ndarray
+        1D ndarray with times (x-scale of data).
+    decay : ndarray
+        1D ndarray with fluorescence decays (y-scale of data).
+    instrument_response : ndarray, optional
+        1D ndarray with instrument_response functions 
+        (for convolution with calculated model).
+    fit_statistic : str, optional
+        Statisic used in fitting minimization. 
+        Accepts the following str: 'c_statistic', 'chi_square_statistic', 
+        'chi_square_statistic_variable_projection'.
+
+    Raises
+    ------
+    ValueError
+        If invalid `fit_statistic` is provided.
+
+    Returns
+    -------
+    fluo.Fitter
+    """
     
     allowed_fit_statistics = dict(
     c_statistic = CStatistic(),
@@ -113,14 +161,13 @@ def make_lifetime_fitter(
 
     try:
         statistic_cls = allowed_fit_statistics[fit_statistic]
-    except KeyError as err:
+    except KeyError:
         allowed_fit_statistics_names = ", ".join(list(allowed_fit_statistics.keys()))
-        print(
+        raise ValueError(
             "fit_statistic: '{0}' not implemented. Available fit_statistic: {1}".format(
                 fit_statistic, 
                 allowed_fit_statistics_names)
         )
-        raise err
 
     # pre-process fit range
     fit_start, fit_stop = user_kwargs.pop('start'), user_kwargs.pop('stop')
@@ -169,9 +216,32 @@ def make_lifetime_fitter(
 
 
 class Fitter(): 
-    '''
+    """
+    Class for fitting.
 
-    '''
+    Parameters
+    ----------
+    ModelClass : fluo.AbstractModel
+        Model class inheriting from fluo.AbstractModel
+    independent_var : dict
+        Independent variables for fit. Dict with names of 
+        independent variables encoded by keys (str)
+        and values as ndarrays.
+    dependent_var : ndarray
+        1D ndarray with dependent variable for fit.
+    statistic : fluo.Statistic
+        Statistic class for fit.
+
+    Attributes
+    ----------
+    parameters : lmfit.Parameters
+    model : fluo.GenericModel
+
+    Methods
+    -------
+    fit : lmfit.ModelResult
+    autocorrelation : ndarray
+    """
 
     def __init__(self, ModelClass, independent_var, dependent_var, statistic):
         self.ModelClass = ModelClass
@@ -182,6 +252,19 @@ class Fitter():
         self.model = ModelClass.make_model(**independent_var)
                 
     def fit(self, report=True):
+        """
+        Performes fit.
+
+        Parameters
+        ----------
+        report : bool, optional
+            By default True to print lmfit.report_fit
+
+        Returns
+        -------
+        lmfit.ModelResult
+
+        """
         self.name = '{} fitted using {}'.format(
             self.model.name,
             self.statistic.name)
@@ -197,7 +280,8 @@ class Fitter():
 
     @staticmethod
     def autocorrelation(residuals):
-        """Calculates correlation between residuals in i-th and (i+j)-th channels.
+        """
+        Calculates correlation between residuals in i-th and (i+j)-th channels.
 
         Parameters
         ----------
