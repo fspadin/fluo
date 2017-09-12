@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Module with Statistic objects. Statistic provides definition of objective function and optimization method for fitting process.
+"""
+
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy

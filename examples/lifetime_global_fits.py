@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
-from fluo import make_global_lifetime_fitter
+
+"""
+Module with example of simultaneously fitting lifetimes to multiple measurements of fluorescence decay.
+"""
+
+from fluo.fitter import make_global_lifetime_fitter
 import numpy as np
+np.set_printoptions(threshold=np.nan)
 
 def main():  
     fit_kwargs = {
@@ -77,11 +83,11 @@ def main():
     local_model_kwargs_e1_tail = [model_kwargs_e1_tail]*2
     local_model_kwargs_e1 = [model_kwargs_e1]*2
     
-    # print('GlobalTailFitter Chi2 statistic')
-    # global_tail = \
-    # make_global_lifetime_fitter(local_model_kwargs_e1_tail, local_time, local_data, fit_statistic='chi_square_statistic', shared=['tau1'])
-    # global_tail.fit()
-    # print()
+    print('GlobalTailFitter Chi2 statistic')
+    global_tail = \
+    make_global_lifetime_fitter(local_model_kwargs_e1_tail, local_time, local_data, fit_statistic='chi_square_statistic', shared=['tau1'])
+    global_tail.fit()
+    print()
         
     # print('GlobalTailFitter Chi2 Var Pro statistic')
     # global_tail = \

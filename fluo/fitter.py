@@ -1,8 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Module with a Fitter object and factory functions for fitting lifetimes to measurements of fluorescence decay.
+"""
+
 from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
 from .models import Exponential, ConvolvedExponential, Linear, Linearize, GlobalModel
 import numpy as np
-np.set_printoptions(threshold=np.nan)
 from lmfit import report_fit
 import matplotlib
 from matplotlib import pyplot as plt
@@ -11,6 +15,23 @@ import itertools
 
 
 def iterative_least_squares(FitterClass, iterations):
+    """
+    Performs least squares minimization in iterations, 
+    with initial parameters values from previous iteration 
+    and variance approximation according to Pearson 
+    (based on fitted model).
+
+    Parameters
+    ----------
+    FitterClass : fluo.Fitter
+    iterations : int
+
+    Returns
+    -------
+    fits : list 
+        List with fit from every iteration.
+    """
+
     print(
         "0-th iteration. Initial fit."
         )
@@ -29,7 +50,22 @@ def iterative_least_squares(FitterClass, iterations):
         fits.append(i_fit)
     return fits
 
-def make_global_lifetime_fitter(local_user_kwargs, local_times, local_decays, local_instrument_responses=None, fit_statistic='c_statistic', shared=None):
+def make_global_lifetime_fitter(
+    local_user_kwargs, local_times, 
+    local_decays, 
+    local_instrument_responses=None, 
+    fit_statistic='c_statistic', 
+    shared=None):
+    """
+
+    Parameters
+    ----------
+    FitterClass : fluo.Fitter
+    iterations : int
+
+    Returns
+    -------
+    """
     if local_instrument_responses is None:
         local_instrument_responses = iter([])
     local_zipped = itertools.zip_longest(local_user_kwargs, local_times, local_decays, local_instrument_responses)
@@ -54,7 +90,13 @@ def make_global_lifetime_fitter(local_user_kwargs, local_times, local_decays, lo
     )
 
 
-def make_lifetime_fitter(user_kwargs, time, decay, instrument_response=None, fit_statistic='c_statistic', fit_kwargs=None):
+def make_lifetime_fitter(
+    user_kwargs, 
+    time, 
+    decay, 
+    instrument_response=None, 
+    fit_statistic='c_statistic',
+    fit_kwargs=None):
     
     allowed_fit_statistics = dict(
     c_statistic = CStatistic(),

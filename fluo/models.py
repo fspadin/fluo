@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Module with models for fitting. GenericModel overrides lmfit.Model to utilize Statistic object in fit.
+"""
+
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 import numpy as np
@@ -10,6 +15,7 @@ class AbstractModel():
     __metaclass__ = ABCMeta
     
     def __init__(self, user_kwargs=None):
+        # self.fit_components = fit_components
         self.user_kwargs = user_kwargs
 
     def make_model(self, **independent_var): 

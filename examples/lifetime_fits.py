@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
+
+"""
+Module with example of fitting lifetimes to single measurements of fluorescence decay.
+"""
+
 from fluo.fitter import make_lifetime_fitter
 import numpy as np
+np.set_printoptions(threshold=np.nan)
 
 def main():  
     fit_kwargs = {
