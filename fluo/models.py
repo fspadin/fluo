@@ -14,9 +14,9 @@ from lmfit import Parameters, Model
 class AbstractModel(): 
     __metaclass__ = ABCMeta
     
-    def __init__(self, user_kwargs=None):
-        # self.fit_components = fit_components
-        self.user_kwargs = user_kwargs
+    def __init__(self, fit_components, initial_parameters=None):
+        self.fit_components = fit_components
+        self.initial_parameters = initial_parameters
 
     def make_model(self, **independent_var): 
         return GenericModel(
@@ -100,17 +100,11 @@ class ConvolvedExponential(AbstractModel):
         return self.convolved_exponential(**independent_var)
 
     def make_parameters(self):
-        nonlinear_pars = Exponential(self.user_kwargs).make_parameters()
-        if self.user_kwargs['--shift'] is None:
-            nonlinear_pars.add(
-                'shift', 
-                value=0., 
-                vary=True)
-        else:
-            nonlinear_pars.add(
-                'shift', 
-                value=getValue(self.user_kwargs['--shift']), 
-                vary=doesVary(self.user_kwargs['--shift']))
+        nonlinear_pars = Exponential(self.fit_components, self.initial_parameters).make_parameters()
+        nonlinear_pars.add(
+            'shift', 
+            **self.initial_parameters.get('shift', {'value': 0, 'vary': True})
+            )
         return nonlinear_pars
 
     def convolved_exponential(self, time, instrument_response):
@@ -148,21 +142,12 @@ class Exponential(AbstractModel):
         return self.exponential(**independent_var)
     
     def make_parameters(self):
-        fit_components  = int(self.user_kwargs['<lt-fit_components>'])
-        nonlinear_pars = Parameters()
-        for i, tau in zip(range(fit_components), self.user_kwargs['--tau']):
-            if tau is None:
-                nonlinear_pars.add(
-                    'tau%d' % (i + 1), 
-                    value=1., 
-                    vary=True, 
-                    min=1E-6)
-            else:
-                nonlinear_pars.add(
-                    'tau%d' % (i + 1), 
-                    value=getValue(tau), 
-                    vary=doesVary(tau), 
-                    min=1E-6)
+        nonlinear_pars = Parameters()         
+        for i in range(self.fit_components):
+            nonlinear_pars.add(
+                'tau{}'.format(i+1), 
+                **self.initial_parameters.get('tau{}'.format(i+1), {'value': 1, 'vary': True, 'min': 1E-6})
+                )
         return nonlinear_pars
 
     @staticmethod
@@ -180,31 +165,16 @@ class Linear(AbstractModel):
         return self.linear(independent_var)
 
     def make_parameters(self):
-        fit_components = int(self.user_kwargs['<lt-fit_components>'])
         linear_pars = Parameters()
-        for i, amplitude in zip(range(fit_components), self.user_kwargs['--amplitude']):
-            if amplitude is None:
-                linear_pars.add(
-                    'amplitude%d' % (i + 1), 
-                    value=1., 
-                    vary=True)
-            else:
-                linear_pars.add(
-                    'amplitude%d' % (i + 1), 
-                    value=getValue(amplitude),
-                    vary=doesVary(amplitude))
-        if self.user_kwargs['--offset'] is None:
+        for i in range(self.fit_components):
             linear_pars.add(
-                'offset', 
-                value=0., 
-                vary=True,
-                )
-        else:
-            linear_pars.add(
-                'offset', 
-                value=getValue(self.user_kwargs['--offset']),
-                vary=doesVary(self.user_kwargs['--offset'])
-                )
+               'amplitude{}'.format(i+1), 
+                **self.initial_parameters.get('amplitude{}'.format(i+1), {'value': 1, 'vary': True})
+            )               
+        linear_pars.add(
+            'offset', 
+            **self.initial_parameters.get('offset', {'value': 0, 'vary': True})
+            )
         return linear_pars
     
     @staticmethod
@@ -231,7 +201,7 @@ class Linearize():
          
     def make_parameters(self):
         nonlinear_params = self.ModelClass.make_parameters()
-        linear_params = Linear(self.user_kwargs).make_parameters()
+        linear_params = Linear(self.fit_components, self.initial_parameters).make_parameters()
         for param_name, param in linear_params.items():
             nonlinear_params.add(
             param_name,

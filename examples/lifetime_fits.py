@@ -10,68 +10,53 @@ np.set_printoptions(threshold=np.nan)
 
 def main():  
     fit_kwargs = {
-        '--conf_i': False,
+        'conf_i': False,
         '-C': False,
-        '--no-output': False,
-        '--plot': True,
+        'no-output': False,
+        'plot': True,
         '-p': False,
     }
     model_kwargs_e1_tail = {
-        '<lt-fit_components>': '1',
-        '--amplitude': ['~7000'],
-        '--gamma': [],
-        '--noiseless_IRF': False,
-        '--offset': '~0.1',
-        '--positive-amplitudes': False,
-        '--quench': [],
-        '--shift': None,
-        '--start': 12,
-        '--stop': None,
-        '--tau': ['~5'],
-        '--width': []
+        'fit_components': 1,
+        'initial_parameters': {
+            'amplitude1': {'value': 7000, 'vary': True},
+            'offset': {'value': 0.1, 'vary': True},
+            'tau1': {'value': 5, 'vary': True},
+        },
+        'start': 12,
+        'stop': None
     }
     model_kwargs_e1 = {
-        '<lt-fit_components>': '1',
-        '--amplitude': ['~0.06'],
-        '--gamma': [],
-        '--noiseless_IRF': False,
-        '--offset': '~0.1',
-        '--positive-amplitudes': False,
-        '--quench': [],
-        '--shift': None,
-        '--start': 2,
-        '--stop': None,
-        '--tau': ['~5'],
-        '--width': []
-    }
+        'fit_components': 1,
+        'initial_parameters': {
+            'amplitude1': {'value': 0.06, 'vary': True},
+            'offset': {'value': 0.1, 'vary': True},
+            'tau1': {'value': 5, 'vary': True},
+        },
+        'start': 2,
+        'stop': None
+    }    
     model_kwargs_e2_tail = {
-        '--amplitude': [None, None],
-        '--gamma': [],
-        '--noiseless_IRF': False,
-        '--offset': None,
-        '--positive-amplitudes': False,
-        '--quench': [],
-        '--shift': None,
-        '--start': 12,
-        '--stop': None,
-        '--tau': ['~5', '~4'],
-        '--width': [],
-        '<lt-fit_components>': '2'
-    }
+        'fit_components': 2,
+        'initial_parameters': {
+            'offset': {'value': 0.1, 'vary': True},
+            'tau1': {'value': 5, 'vary': True},
+            'tau2': {'value': 4, 'vary': True}
+        },
+        'start': 12,
+        'stop': None
+    }    
     model_kwargs_e2 = {
-        '--amplitude': [None, None],
-        '--gamma': [],
-        '--noiseless_IRF': False,
-        '--offset': None,
-        '--positive-amplitudes': False,
-        '--quench': [],
-        '--shift': None,
-        '--start': 2,
-        '--stop': None,
-        '--tau': ['~5', '~4'],
-        '--width': [],
-        '<lt-fit_components>': '2'
-    }
+        'fit_components': 2,
+        'initial_parameters': {
+            'offset': {'value': 0.1, 'vary': True},
+            'tau1': {'value': 5, 'vary': True},
+            'tau2': {'value': 4, 'vary': True}
+        },
+        'start': 2,
+        'stop': None
+    } 
+
     file = np.loadtxt('./1exp_4.9ns.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
 

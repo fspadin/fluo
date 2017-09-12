@@ -51,7 +51,8 @@ def iterative_least_squares(FitterClass, iterations):
     return fits
 
 def make_global_lifetime_fitter(
-    local_user_kwargs, local_times, 
+    local_user_kwargs, 
+    local_times, 
     local_decays, 
     local_instrument_responses=None, 
     fit_statistic='c_statistic', 
@@ -68,9 +69,15 @@ def make_global_lifetime_fitter(
     """
     if local_instrument_responses is None:
         local_instrument_responses = iter([])
-    local_zipped = itertools.zip_longest(local_user_kwargs, local_times, local_decays, local_instrument_responses)
+    local_zipped = itertools.zip_longest(
+        local_user_kwargs, 
+        local_times, 
+        local_decays, 
+        local_instrument_responses
+        )
+
     local_fitter_classes = [
-        make_lifetime_fitter(user_kwargs, time, decay, instrument_response, fit_statistic=fit_statistic) for (user_kwargs, time, decay, instrument_response) in local_zipped
+        make_lifetime_fitter(*args) for args in local_zipped
     ]
 
     global_pre_fitter_cls = GlobalModel(
@@ -115,28 +122,28 @@ def make_lifetime_fitter(
         )
         raise err
 
-    if instrument_response is None:
-        exponential_cls = Exponential(user_kwargs)
-        independent_var = dict(
-            time=time
-        )
-    else:
-        exponential_cls = ConvolvedExponential(user_kwargs)
-        independent_var = dict(
-            time=time, 
-            instrument_response=instrument_response
-            )
-
     # pre-process fit range
-    fit_start, fit_stop = user_kwargs['--start'], user_kwargs['--stop']
+    fit_start, fit_stop = user_kwargs.pop('start'), user_kwargs.pop('stop')
     if fit_start is None:
         fit_start = 0
     if fit_stop is None:
         fit_stop = np.inf
     range_mask = (time >= fit_start) & (time <= fit_stop)
     decay = decay[range_mask].astype(float)
-    for key, var in independent_var.items():
-        independent_var[key] = var[range_mask].astype(float) 
+    time = time[range_mask].astype(float)
+
+    if instrument_response is None:
+        exponential_cls = Exponential(**user_kwargs)
+        independent_var = dict(
+            time=time
+        )
+    else:
+        exponential_cls = ConvolvedExponential(**user_kwargs)
+        instrument_response = instrument_response[range_mask].astype(float)
+        independent_var = dict(
+            time=time, 
+            instrument_response=instrument_response
+            )
 
     if isinstance(
         statistic_cls, 
