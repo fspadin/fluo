@@ -256,29 +256,3 @@ class GenericModel(Model):
         return super().fit(data, params, weights, method,
             iter_cb, scale_covar, verbose, fit_kws,
             **kwargs)
-
-# def doesVary(parameter, default=True):
-#     '''Helper function for `lmfit.Parameter`; checks if parameter does vary during
-#     fit (value is preceded by `~` sign).'''
-#     if isinstance(parameter, str): # only strings, not NoneType or Boolean
-#         if parameter.startswith('~'):
-#             return True
-#         else:
-#             return False
-#     return default # if not specified in parameter, return default value
-
-# def getValue(parameter):
-#     ''' Helper function for lmfit parameter; sets parameter value. '''
-#     if isinstance(parameter, str): # only strings, not NoneType or Boolean
-#         # parameter = parameter.lstrip('~egl') # leave only number
-#         try:
-#             return float(parameter.lstrip('~egl')) # from string to number
-#         except ValueError:
-#             return None
-#     return parameter
-
-# def sorted_values(parameters):
-#     """Sorts parameters values."""
-#     parameters = OrderedDict(sorted(parameters.items()))
-#     sorted_vals = np.asarray(list(parameters.values()))
-#     return sorted_vals

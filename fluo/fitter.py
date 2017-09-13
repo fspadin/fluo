@@ -4,18 +4,16 @@
 Module with a Fitter object and factory functions for fitting lifetimes to measurements of fluorescence decay.
 """
 
-from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
-from .models import Exponential, ConvolvedExponential, Linear, Linearize, GlobalModel
 import numpy as np
 from lmfit import report_fit
-import matplotlib
-from matplotlib import pyplot as plt
 import itertools
-
+from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
+from .models import Exponential, ConvolvedExponential, Linear, Linearize, GlobalModel
 
 
 def iterative_least_squares(FitterClass, iterations):
-    """
+    """Performs least squares in a loop.
+
     Performs least squares minimization in iterations, 
     with initial parameters values from previous iteration 
     and variance approximation according to Pearson 
@@ -57,9 +55,9 @@ def make_global_lifetime_fitter(
     local_instrument_responses=None, 
     fit_statistic='c_statistic', 
     shared=None):
-    """
-    Makes `fluo.Fitter` object for simultaneous (global) fitting multiple 
-    measurements.
+    """Makes a fitter for simultaneous (global) fitting.
+
+    Makes `fluo.Fitter` object for simultaneous (global) fitting multiple measurements.
 
     Parameters
     ----------
@@ -124,7 +122,8 @@ def make_lifetime_fitter(
     decay, 
     instrument_response=None, 
     fit_statistic='c_statistic'):
-    """
+    """Makes a fitter.
+
     Makes `fluo.Fitter` object for fitting a single measurement.
 
     Parameters
@@ -217,8 +216,7 @@ def make_lifetime_fitter(
 
 
 class Fitter(): 
-    """
-    Class for fitting.
+    """Fitter object for fitting.
 
     Parameters
     ----------
@@ -253,8 +251,7 @@ class Fitter():
         self.model = ModelClass.make_model(**independent_var)
                 
     def fit(self, report=True):
-        """
-        Performes fit.
+        """Performes a fit.
 
         Parameters
         ----------
@@ -281,7 +278,8 @@ class Fitter():
 
     @staticmethod
     def autocorrelation(residuals):
-        """
+        """Calculates residuals autocorrelation.
+
         Calculates correlation between residuals in i-th and (i+j)-th channels.
 
         Parameters

@@ -4,9 +4,11 @@
 Module with example of fitting lifetimes to single measurements of fluorescence decay.
 """
 
-from fluo.fitter import make_lifetime_fitter
 import numpy as np
 np.set_printoptions(threshold=np.nan)
+import matplotlib
+from matplotlib import pyplot as plt
+from fluo.fitter import make_lifetime_fitter
 
 def main():  
     fit_kwargs = {

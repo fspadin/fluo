@@ -11,18 +11,12 @@ import scipy.linalg
 import warnings
 
 class Statistic():
-    """
-    Abstract class for Statistic object.ABCMeta
+    """Abstract class for Statistic object.
 
     Parameters
     ----------
     name : str
     optimization_method : str
-
-    Raises
-    -------
-    NotImplementedError 
-        If Statistic.objective_func is not overriden.
     """
     __metaclass__ = ABCMeta
 
@@ -36,7 +30,24 @@ class Statistic():
 
 
 class CStatistic(Statistic):
+    """Class for C statistic.
 
+    C statistic for data with Poisson distribution. 
+    The objective funtion is calculated as log-likelihood of the product of Poisson probabilities in each bin.
+
+    Parameters
+    ----------
+    optimization_method : str, optional
+        'nelder' by default. Accepts the following str: 'nelder', 'powell'.
+
+    Attributes
+    ----------
+    name : str
+
+    Methods
+    -------
+    objective_func : ndarray
+    """
     _allowed_optimization_methods = ['nelder', 'powell']
 
     def __init__(self, optimization_method='nelder'):
@@ -50,6 +61,24 @@ class CStatistic(Statistic):
         )
 
     def objective_func(self, model, dependent_var):
+        """Objective function minimized in fit.
+
+        Parameters
+        ----------
+        model : ndarray
+            Values in model must not be negative. The negative values are dropped from model.
+        dependent_var : ndarray
+            Values in dependent_var must not equal zero. The zero-valued entries are dropped from dependent_var.
+
+        Raises
+        ------
+        warnings.warn
+            If negative values are encountered in model.
+
+        Returns
+        -------
+        ndarray
+        """
         model_copy = np.copy(model)
         dependent_var_copy = np.copy(dependent_var)        
         if np.sum(model < 0):
@@ -62,7 +91,30 @@ class CStatistic(Statistic):
 
 
 class ChiSquareStatistic(Statistic):
+    """Class for Chi square statistic.
 
+    Chi square statistic for data with Gaussian distribution. 
+    The objective funtion is calculated according to the
+    weighted least squares. The weights are calculated according
+    to Neyman or Pearson variance approximation.
+
+    Parameters
+    ----------
+    optimization_method : str, optional
+        'leastsq' by default.
+    variance_approximation : str, optional
+        'Neyman' by default. Accepts the following str: 'Neyman', 'Pearson', None.
+
+    Attributes
+    ----------
+    name : str
+
+    Methods
+    -------
+    objective_func : ndarray
+    weight : ndarray
+    apply_weight : ndarray
+    """
     _allowed_variance_approximations = [None, 'Neyman', 'Pearson']
 
     def __init__(self, optimization_method='leastsq',
@@ -79,7 +131,19 @@ class ChiSquareStatistic(Statistic):
             optimization_method=optimization_method)
 
     def objective_func(self, model, dependent_var):
-        
+        """Objective function minimized in fit.
+
+        Calculates weighted residuals (difference between provided model and dependent variable). The weights are calculated according to `variance_approximation`.
+
+        Parameters
+        ----------
+        model : ndarray
+        dependent_var : ndarray
+
+        Returns
+        -------
+        ndarray
+        """        
         if self.variance_approximation is not None:
             model, dependent_var = self._weight_input(model, dependent_var)
         return (model - dependent_var)
@@ -94,12 +158,33 @@ class ChiSquareStatistic(Statistic):
 
     @staticmethod
     def weight(arr):
+        """Calculates reciprocal square root. 
+
+        Parameters
+        ----------
+        arr : ndarray
+
+        Returns
+        -------
+        ndarray
+        """          
         arr[arr <= 0] = 1.
         return np.reciprocal(np.sqrt(arr))
 
-    @staticmethod
+    @staticmethod    
     def apply_weight(arr, weights):
+        """Multiplies `arr` by `weights` row-wise.
 
+        Parameters
+        ----------
+        arr : ndarray
+        weights : ndarray
+
+        Returns
+        -------
+        ndarray
+            Weighted array.
+        """     
         ncols, *nrows = arr.shape
         arr_weighted = np.copy(arr)
         try:
@@ -111,16 +196,50 @@ class ChiSquareStatistic(Statistic):
         
 
 class ChiSquareStatisticVariableProjection(ChiSquareStatistic):
+    """Class for Chi square statistic for variable projection.
 
+    Chi square statistic for data with Gaussian distribution. 
+    The objective funtion is calculated according to the
+    weighted separable non-linear least squares, where linear parameters are eliminated. The weights are calculated according to Neyman or Pearson variance approximation.
+
+    Parameters
+    ----------
+    optimization_method : str, optional
+        'leastsq' by default.
+    variance_approximation : str, optional
+        'Neyman' by default. Accepts the following str: 'Neyman', 'Pearson', None.
+
+    Attributes
+    ----------
+    name : str
+
+    Methods
+    -------
+    objective_func : ndarray
+    weight : ndarray
+    apply_weight : ndarray
+    """
     def __init__(self, optimization_method='leastsq',
-                 variance_approximation=None):
+                 variance_approximation='Neyman'):
         super().__init__(
             optimization_method=optimization_method,
             variance_approximation=variance_approximation)
         self.name='chi_square_statistic_variable_projection'
 
     def objective_func(self, model, dependent_var):
-        
+        """Objective function minimized in fit.
+
+        Calculates weighted residuals as varible projection of `dependent_var`. The weights are calculated according to `variance_approximation`.
+
+        Parameters
+        ----------
+        model : ndarray
+        dependent_var : ndarray
+
+        Returns
+        -------
+        ndarray
+        """         
         if self.variance_approximation is not None:
             model, dependent_var = self._weight_input(model, dependent_var)
         
