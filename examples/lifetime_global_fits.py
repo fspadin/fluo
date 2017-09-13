@@ -17,44 +17,44 @@ def main():
         '-p': False,
     }
     model_kwargs_e1_tail = {
-        'fit_components': 1,
-        'initial_parameters': {
+        'model_components': 1,
+        'model_parameters': {
             'amplitude1': {'value': 7000, 'vary': True},
             'offset': {'value': 0.1, 'vary': True},
             'tau1': {'value': 5, 'vary': True},
         },
-        'start': 12,
-        'stop': None
+        'fit_start': 12,
+        'fit_stop': None
     }
     model_kwargs_e1 = {
-        'fit_components': 1,
-        'initial_parameters': {
+        'model_components': 1,
+        'model_parameters': {
             'amplitude1': {'value': 0.06, 'vary': True},
             'offset': {'value': 0.1, 'vary': True},
             'tau1': {'value': 5, 'vary': True},
         },
-        'start': 2,
-        'stop': None
+        'fit_start': 2,
+        'fit_stop': None
     }    
     model_kwargs_e2_tail = {
-        'fit_components': 2,
-        'initial_parameters': {
+        'model_components': 2,
+        'model_parameters': {
             'offset': {'value': 0.1, 'vary': True},
             'tau1': {'value': 5, 'vary': True},
             'tau2': {'value': 4, 'vary': True}
         },
-        'start': 12,
-        'stop': None
+        'fit_start': 12,
+        'fit_stop': None
     }    
     model_kwargs_e2 = {
-        'fit_components': 2,
-        'initial_parameters': {
+        'model_components': 2,
+        'model_parameters': {
             'offset': {'value': 0.1, 'vary': True},
             'tau1': {'value': 5, 'vary': True},
             'tau2': {'value': 4, 'vary': True}
         },
-        'start': 2,
-        'stop': None
+        'fit_start': 2,
+        'fit_stop': None
     } 
     file1 = np.loadtxt('./1exp_4.9ns.txt', skiprows=1)
     file2 = np.loadtxt('./1exp_5ns_ble.txt', skiprows=1)

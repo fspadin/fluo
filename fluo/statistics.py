@@ -11,6 +11,19 @@ import scipy.linalg
 import warnings
 
 class Statistic():
+    """
+    Abstract class for Statistic object.ABCMeta
+
+    Parameters
+    ----------
+    name : str
+    optimization_method : str
+
+    Raises
+    -------
+    NotImplementedError 
+        If Statistic.objective_func is not overriden.
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, name, optimization_method):
@@ -19,7 +32,7 @@ class Statistic():
     
     @abstractmethod
     def objective_func(self, *args):
-        raise NotImplementedError("`Statistic.objective_func()` not implemented")
+        raise NotImplementedError("`Statistic.objective_func` not implemented")
 
 
 class CStatistic(Statistic):

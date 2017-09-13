@@ -170,7 +170,7 @@ def make_lifetime_fitter(
         )
 
     # pre-process fit range
-    fit_start, fit_stop = user_kwargs.pop('start'), user_kwargs.pop('stop')
+    fit_start, fit_stop = user_kwargs.pop('fit_start'), user_kwargs.pop('fit_stop')
     if fit_start is None:
         fit_start = 0
     if fit_stop is None:

@@ -14,9 +14,9 @@ from lmfit import Parameters, Model
 class AbstractModel(): 
     __metaclass__ = ABCMeta
     
-    def __init__(self, fit_components, initial_parameters=None):
-        self.fit_components = fit_components
-        self.initial_parameters = initial_parameters
+    def __init__(self, model_components, model_parameters=None):
+        self.model_components = model_components
+        self.model_parameters = model_parameters
 
     def make_model(self, **independent_var): 
         return GenericModel(
@@ -100,10 +100,10 @@ class ConvolvedExponential(AbstractModel):
         return self.convolved_exponential(**independent_var)
 
     def make_parameters(self):
-        nonlinear_pars = Exponential(self.fit_components, self.initial_parameters).make_parameters()
+        nonlinear_pars = Exponential(self.model_components, self.model_parameters).make_parameters()
         nonlinear_pars.add(
             'shift', 
-            **self.initial_parameters.get('shift', {'value': 0, 'vary': True})
+            **self.model_parameters.get('shift', {'value': 0, 'vary': True})
             )
         return nonlinear_pars
 
@@ -143,10 +143,10 @@ class Exponential(AbstractModel):
     
     def make_parameters(self):
         nonlinear_pars = Parameters()         
-        for i in range(self.fit_components):
+        for i in range(self.model_components):
             nonlinear_pars.add(
                 'tau{}'.format(i+1), 
-                **self.initial_parameters.get('tau{}'.format(i+1), {'value': 1, 'vary': True, 'min': 1E-6})
+                **self.model_parameters.get('tau{}'.format(i+1), {'value': 1, 'vary': True, 'min': 1E-6})
                 )
         return nonlinear_pars
 
@@ -166,14 +166,14 @@ class Linear(AbstractModel):
 
     def make_parameters(self):
         linear_pars = Parameters()
-        for i in range(self.fit_components):
+        for i in range(self.model_components):
             linear_pars.add(
                'amplitude{}'.format(i+1), 
-                **self.initial_parameters.get('amplitude{}'.format(i+1), {'value': 1, 'vary': True})
+                **self.model_parameters.get('amplitude{}'.format(i+1), {'value': 1, 'vary': True})
             )               
         linear_pars.add(
             'offset', 
-            **self.initial_parameters.get('offset', {'value': 0, 'vary': True})
+            **self.model_parameters.get('offset', {'value': 0, 'vary': True})
             )
         return linear_pars
     
@@ -201,7 +201,7 @@ class Linearize():
          
     def make_parameters(self):
         nonlinear_params = self.ModelClass.make_parameters()
-        linear_params = Linear(self.fit_components, self.initial_parameters).make_parameters()
+        linear_params = Linear(self.model_components, self.model_parameters).make_parameters()
         for param_name, param in linear_params.items():
             nonlinear_params.add(
             param_name,
@@ -257,28 +257,28 @@ class GenericModel(Model):
             iter_cb, scale_covar, verbose, fit_kws,
             **kwargs)
 
-def doesVary(parameter, default=True):
-    '''Helper function for `lmfit.Parameter`; checks if parameter does vary during
-    fit (value is preceded by `~` sign).'''
-    if isinstance(parameter, str): # only strings, not NoneType or Boolean
-        if parameter.startswith('~'):
-            return True
-        else:
-            return False
-    return default # if not specified in parameter, return default value
+# def doesVary(parameter, default=True):
+#     '''Helper function for `lmfit.Parameter`; checks if parameter does vary during
+#     fit (value is preceded by `~` sign).'''
+#     if isinstance(parameter, str): # only strings, not NoneType or Boolean
+#         if parameter.startswith('~'):
+#             return True
+#         else:
+#             return False
+#     return default # if not specified in parameter, return default value
 
-def getValue(parameter):
-    ''' Helper function for lmfit parameter; sets parameter value. '''
-    if isinstance(parameter, str): # only strings, not NoneType or Boolean
-        # parameter = parameter.lstrip('~egl') # leave only number
-        try:
-            return float(parameter.lstrip('~egl')) # from string to number
-        except ValueError:
-            return None
-    return parameter
+# def getValue(parameter):
+#     ''' Helper function for lmfit parameter; sets parameter value. '''
+#     if isinstance(parameter, str): # only strings, not NoneType or Boolean
+#         # parameter = parameter.lstrip('~egl') # leave only number
+#         try:
+#             return float(parameter.lstrip('~egl')) # from string to number
+#         except ValueError:
+#             return None
+#     return parameter
 
-def sorted_values(parameters):
-    """Sorts parameters values."""
-    parameters = OrderedDict(sorted(parameters.items()))
-    sorted_vals = np.asarray(list(parameters.values()))
-    return sorted_vals
+# def sorted_values(parameters):
+#     """Sorts parameters values."""
+#     parameters = OrderedDict(sorted(parameters.items()))
+#     sorted_vals = np.asarray(list(parameters.values()))
+#     return sorted_vals
