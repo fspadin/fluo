@@ -179,6 +179,7 @@ def make_lifetime_fitter(
     decay = decay[range_mask].astype(float)
     time = time[range_mask].astype(float)
 
+    # make model
     if instrument_response is None:
         exponential_cls = Exponential(**user_kwargs)
         independent_var = dict(
