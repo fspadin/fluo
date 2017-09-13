@@ -169,6 +169,7 @@ def make_lifetime_fitter(
         )
 
     # pre-process fit range
+    user_kwargs = user_kwargs.copy()
     fit_start, fit_stop = user_kwargs.pop('fit_start'), user_kwargs.pop('fit_stop')
     if fit_start is None:
         fit_start = 0
@@ -220,8 +221,8 @@ class Fitter():
 
     Parameters
     ----------
-    ModelClass : fluo.AbstractModel
-        Model class inheriting from fluo.AbstractModel
+    ModelClass : fluo.Model
+        Model class inheriting from fluo.Model
     independent_var : dict
         Independent variables for fit. Dict with names of 
         independent variables encoded by keys (str)

@@ -9,9 +9,21 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy
 import scipy.interpolate
-from lmfit import Parameters, Model
+import lmfit  
 
-class AbstractModel(): 
+class Model(): 
+    """Wrapper around fluo.GenericModel.
+
+    Abstract class for Model objects. 
+
+    Parameters
+    ----------
+    model_components : int
+        Number of components in model (i. e. number of exponents).
+    model_parameters : dict
+        Dict with names of parameters encoded by keys (str)
+        and values with dictionary. 
+    """    
     __metaclass__ = ABCMeta
     
     def __init__(self, model_components, model_parameters=None):
@@ -19,6 +31,8 @@ class AbstractModel():
         self.model_parameters = model_parameters
 
     def make_model(self, **independent_var): 
+        """Makes fluo.GenericModel.
+        """
         return GenericModel(
     self.model_function(**independent_var), 
     missing='drop', 
@@ -33,7 +47,7 @@ class AbstractModel():
     def make_parameters(self):
         raise NotImplementedError()
 
-class GlobalModel(AbstractModel):
+class GlobalModel(Model):
     
     def __init__(self, FitterClasses, shared=None):
         self.FitterClasses = FitterClasses
@@ -77,7 +91,7 @@ class GlobalModel(AbstractModel):
 
     def glue_parameters(self):
         parameters_references = dict()
-        all_params = Parameters()
+        all_params = lmfit.Parameters()
         for i, params_i in enumerate(self.local_parameters):
             for old_name, param in params_i.items():
                 new_name = old_name + '_file%d' % (i + 1)
@@ -94,7 +108,7 @@ class GlobalModel(AbstractModel):
                     param.expr = constraint + '_file1'
         return all_params, parameters_references
 
-class ConvolvedExponential(AbstractModel):
+class ConvolvedExponential(Model):
 
     def model_function(self, **independent_var):
         return self.convolved_exponential(**independent_var)
@@ -136,13 +150,13 @@ class ConvolvedExponential(AbstractModel):
     def convolve(left, right):
         return np.convolve(left, right, mode='full')[:len(right)]
 
-class Exponential(AbstractModel):
+class Exponential(Model):
 
     def model_function(self, **independent_var):
         return self.exponential(**independent_var)
     
     def make_parameters(self):
-        nonlinear_pars = Parameters()         
+        nonlinear_pars = lmfit.Parameters()         
         for i in range(self.model_components):
             nonlinear_pars.add(
                 'tau{}'.format(i+1), 
@@ -159,13 +173,13 @@ class Exponential(AbstractModel):
         return inner_exponential
 
 
-class Linear(AbstractModel):
+class Linear(Model):
     
     def model_function(self, independent_var):
         return self.linear(independent_var)
 
     def make_parameters(self):
-        linear_pars = Parameters()
+        linear_pars = lmfit.Parameters()
         for i in range(self.model_components):
             linear_pars.add(
                'amplitude{}'.format(i+1), 
@@ -234,7 +248,7 @@ class Linearize():
         return getattr(self.ModelClass, attr)
 
 
-class GenericModel(Model):
+class GenericModel(lmfit.Model):
 
     def __init__(self, func, independent_vars=None,
                  param_names=None, missing='none', prefix='', name=None, **kws):

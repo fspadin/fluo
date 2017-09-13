@@ -61,6 +61,7 @@ def main():
 
     file = np.loadtxt('./1exp_4.9ns.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
+    simulation = np.loadtxt('./simulation.txt')
 
     # print('TailFitter Chi2 Statistic')
     # make_lifetime_fitter(model_kwargs_e1_tail, time, decay, fit_statistic='chi_square_statistic').fit(report=True)
@@ -80,10 +81,10 @@ def main():
     # plt.yscale('log')    
     # plt.show()
 
-    # print('ConvolutionFitter C statistic')
-    # fit_Cstat = \
-    # make_lifetime_fitter(model_kwargs_e1, time, decay, instrument_response=irf, fit_statistic='c_statistic').fit()
-    # print()    
+    print('ConvolutionFitter C statistic')
+    fit_Cstat = \
+    make_lifetime_fitter(model_kwargs_e1, time, decay, instrument_response=irf, fit_statistic='c_statistic').fit()
+    print()    
 
     print('ConvolutionFitter Chi2 Statistic')
     fitter = \
