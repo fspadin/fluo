@@ -94,7 +94,6 @@ def make_global_lifetime_fitter(
         local_decays, 
         local_instrument_responses
         )
-
     local_fitter_classes = [
         make_lifetime_fitter(*args) for args in local_zipped
     ]
@@ -179,7 +178,6 @@ def make_lifetime_fitter(
     decay = decay[range_mask].astype(float)
     time = time[range_mask].astype(float)
 
-    # make model
     if instrument_response is None:
         exponential_cls = Exponential(**user_kwargs)
         independent_var = dict(
@@ -224,23 +222,22 @@ class Fitter():
     ModelClass : fluo.Model
         Model class inheriting from fluo.Model
     independent_var : dict
-        Independent variables for fit. Dict with names of 
-        independent variables encoded by keys (str)
+        Independent variables for a model evaluation. Dict with names of independent variables encoded by keys (str)
         and values as ndarrays.
     dependent_var : ndarray
-        1D ndarray with dependent variable for fit.
+        1D ndarray with dependent variable for fitting.
     statistic : fluo.Statistic
-        Statistic class for fit.
+        Statistic class for fitting.
 
     Attributes
     ----------
     parameters : lmfit.Parameters
+        lmfit.Parameters for model evaluation.
     model : fluo.GenericModel
 
     Methods
     -------
     fit : lmfit.ModelResult
-    autocorrelation : ndarray
     """
 
     def __init__(self, ModelClass, independent_var, dependent_var, statistic):
@@ -257,7 +254,7 @@ class Fitter():
         Parameters
         ----------
         report : bool, optional
-            By default True to print lmfit.report_fit
+            Report fit (True by default).
 
         Returns
         -------
@@ -277,38 +274,38 @@ class Fitter():
             report_fit(result)
         return result
 
-    @staticmethod
-    def autocorrelation(residuals):
-        """Calculates residuals autocorrelation.
 
-        Calculates correlation between residuals in i-th and (i+j)-th channels.
+def autocorrelation(residuals):
+    """Calculates residuals autocorrelation.
 
-        Parameters
-        ----------
-        residuals : ndarray
+    Calculates correlation between residuals in i-th and (i+j)-th channels.
 
-        Returns
-        -------
-        ndarray
-        """
+    Parameters
+    ----------
+    residuals : ndarray
 
-        residuals_full = residuals
-        residuals = residuals[~np.isnan(residuals)]
-        n = len(residuals)
-        inv_n = 1. / n
-        denominator = inv_n * np.sum(np.square(
-            residuals))  # normalization weight in autocorrelation function
-        residuals = list(residuals)
-        m = n // 2
-        numerator = []
-        for j in range(m):
-            k = n - j
-            numerator_sum = 0.0
-            for i in range(k):
-                numerator_sum += residuals[i] * residuals[i + j]
-            numerator.append(numerator_sum / k)
-        numerator = np.array(numerator)
-        autocorr = numerator / denominator
-        over_range = np.array([np.nan] * len(residuals_full))
-        autocorr = np.append(autocorr, over_range)
-        return autocorr
+    Returns
+    -------
+    ndarray
+    """
+
+    residuals_full = residuals
+    residuals = residuals[~np.isnan(residuals)]
+    n = len(residuals)
+    inv_n = 1. / n
+    denominator = inv_n * np.sum(np.square(
+        residuals))  # normalization weight in autocorrelation function
+    residuals = list(residuals)
+    m = n // 2
+    numerator = []
+    for j in range(m):
+        k = n - j
+        numerator_sum = 0.0
+        for i in range(k):
+            numerator_sum += residuals[i] * residuals[i + j]
+        numerator.append(numerator_sum / k)
+    numerator = np.array(numerator)
+    autocorr = numerator / denominator
+    over_range = np.array([np.nan] * len(residuals_full))
+    autocorr = np.append(autocorr, over_range)
+    return autocorr
