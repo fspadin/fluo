@@ -10,6 +10,7 @@ import numpy as np
 import scipy
 import scipy.interpolate
 import lmfit  
+import random
 
 class Model(): 
     """Wrapper around fluo.GenericModel.
@@ -189,9 +190,12 @@ class Convolve():
     def __init__(self, ModelClass, convolution_method='discrete'):
         self.ModelClass = ModelClass
         self.convolution_method = convolution_method
+        self._convolve = self._allowed_convolutions[convolution_method]
 
     def make_model(self, **independent_var): 
-        name = '{} convolved wtih instrument response'.format(self.ModelClass.__class__.__name__)
+        name = '{} convolved wtih instrument response using {}'.format(
+            self.ModelClass.__class__.__name__,
+            self.convolution_method)
         return GenericModel(self.model_function(**independent_var), missing='drop', name=name)
 
     def model_function(self, **independent_var):
@@ -218,9 +222,15 @@ class Convolve():
                 params.pop('shift')
                 )
             to_convolve_with = self.ModelClass.model_function(**independent_var)(**params)      
-            convolved = np.zeros(to_convolve_with.shape)
-            for i in range(to_convolve_with.shape[1]):
-                convolved[:, i] = self._allowed_convolutions[self.convolution_method](shifted_instrument_response, to_convolve_with[:, i])
+            ncols, *nrows = to_convolve_with.shape
+            try:
+                convolved = np.zeros(to_convolve_with.shape)       
+                for i in range(*nrows):
+                    convolved[:, i] = self._convolve(shifted_instrument_response, to_convolve_with[:, i])
+            except TypeError:
+                convolved = self._convolve(
+                    shifted_instrument_response, 
+                    to_convolve_with)
             return convolved
 
         return inner_convolved_exponential
