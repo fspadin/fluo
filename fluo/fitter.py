@@ -8,7 +8,7 @@ import numpy as np
 from lmfit import report_fit
 import itertools
 from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
-from .models import Exponential, ConvolvedExponential, Linear, Linearize, GlobalModel
+from .models import Exponential, Linear, Convolve, Linearize, GlobalModel
 
 
 def iterative_least_squares(FitterClass, iterations):
@@ -186,7 +186,7 @@ def make_lifetime_fitter(
             time=time
         )
     else:
-        exponential_cls = ConvolvedExponential(**user_kwargs)
+        exponential_cls = Convolve(Exponential(**user_kwargs))
         instrument_response = instrument_response[range_mask].astype(float)
         independent_var = dict(
             time=time, 

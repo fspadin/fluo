@@ -108,29 +108,44 @@ class GlobalModel(Model):
                     param.expr = constraint + '_file1'
         return all_params, parameters_references
 
-class ConvolvedExponential(Model):
+class Convolve():
+
+    def __init__(self, ModelClass):
+        self.ModelClass = ModelClass
+
+    def make_model(self, **independent_var): 
+        name = '{} convolved wtih instrument response'.format(self.ModelClass.__class__.__name__)
+        return GenericModel(self.model_function(**independent_var), missing='drop', name=name)
 
     def model_function(self, **independent_var):
         return self.convolved_exponential(**independent_var)
 
     def make_parameters(self):
-        nonlinear_pars = Exponential(self.model_components, self.model_parameters).make_parameters()
+        nonlinear_pars = self.ModelClass.make_parameters()
         nonlinear_pars.add(
             'shift', 
             **self.model_parameters.get('shift', {'value': 0, 'vary': True})
             )
-        return nonlinear_pars
+        return nonlinear_pars    
 
-    def convolved_exponential(self, time, instrument_response):
+    def convolved_exponential(self, **independent_var):
+        independent_var = independent_var.copy()
+        time = independent_var['time']
+        instrument_response = independent_var.pop('instrument_response')
+
         def inner_convolved_exponential(**params):
-            taus = {key: value for key, value in params.items() if
-                    key.startswith('tau')}
-            exp = Exponential.exponential(time)(**taus)
-            conv_exp = np.zeros(exp.shape)
-            for i in range(exp.shape[1]):
-                shifted = self.shift_decay(time, instrument_response, params['shift'])
-                conv_exp[:, i] = self.convolve(shifted, exp[:, i])
-            return conv_exp
+            params = params.copy()
+            shifted_instrument_response = self.shift_decay(
+                time, 
+                instrument_response, 
+                params.pop('shift')
+                )
+            to_convolve_with = self.ModelClass.model_function(**independent_var)(**params)      
+            convolved = np.zeros(to_convolve_with.shape)
+            for i in range(to_convolve_with.shape[1]):
+                convolved[:, i] = self.convolve(shifted_instrument_response, to_convolve_with[:, i])
+            return convolved
+
         return inner_convolved_exponential
 
     @staticmethod
@@ -149,6 +164,9 @@ class ConvolvedExponential(Model):
     @staticmethod
     def convolve(left, right):
         return np.convolve(left, right, mode='full')[:len(right)]
+
+    def __getattr__(self, attr):
+        return getattr(self.ModelClass, attr)
 
 class Exponential(Model):
 
