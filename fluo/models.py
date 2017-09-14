@@ -128,7 +128,15 @@ class AddConstant():
         return pars     
 
     def add_constant(self, **independent_var): 
-        pass
+        func=self.ModelClass.model_function(**independent_var)
+        def inner_add_constant(**params):
+            offset = params.pop('offset')
+            return func(**params) + offset
+
+        return inner_add_constant
+
+    def __getattr__(self, attr):
+        return getattr(self.ModelClass, attr)
      
 class Linearize():
     
@@ -166,7 +174,7 @@ class Linearize():
                     }
             linear_params = {
                 key: params[key] for key in params.keys() if (
-                    key.startswith('amplitude') or key.startswith('offset')
+                    key.startswith('amplitude')
                     )
                     } 
             return linear_func(nonlinear_func(**nonlinear_params))(**linear_params)
@@ -270,10 +278,6 @@ class Linear(Model):
                'amplitude{}'.format(i+1), 
                 **self.model_parameters.get('amplitude{}'.format(i+1), {'value': 1, 'vary': True})
             )               
-        linear_pars.add(
-            'offset', 
-            **self.model_parameters.get('offset', {'value': 0, 'vary': True})
-            )
         return linear_pars
     
     @staticmethod
@@ -282,7 +286,7 @@ class Linear(Model):
             offset = linear_params.pop('offset')
             # amplitudes = sorted_values(linear_params)
             amplitudes = np.asarray(list(linear_params.values())) # may fail if not sorted
-            return independent_var.dot(amplitudes) + offset
+            return independent_var.dot(amplitudes)
         return inner_linear
 
 
