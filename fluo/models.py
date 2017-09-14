@@ -283,7 +283,6 @@ class Linear(Model):
     @staticmethod
     def linear(independent_var):
         def inner_linear(**linear_params):
-            offset = linear_params.pop('offset')
             # amplitudes = sorted_values(linear_params)
             amplitudes = np.asarray(list(linear_params.values())) # may fail if not sorted
             return independent_var.dot(amplitudes)

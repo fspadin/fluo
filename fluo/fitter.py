@@ -8,7 +8,7 @@ import numpy as np
 from lmfit import report_fit
 import itertools
 from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
-from .models import Exponential, Linear, Convolve, Linearize, GlobalModel
+from .models import GlobalModel, AddConstant, Linearize, Convolve, Exponential
 
 
 def iterative_least_squares(FitterClass, iterations):
@@ -209,7 +209,7 @@ def make_lifetime_fitter(
             )
     else:
         return Fitter(
-            ModelClass=Linearize(exponential_cls),
+            ModelClass=AddConstant(Linearize(exponential_cls)),
             independent_var=independent_var, 
             dependent_var=decay,
             statistic=statistic_cls
