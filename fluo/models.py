@@ -108,6 +108,74 @@ class GlobalModel(Model):
                     param.expr = constraint + '_file1'
         return all_params, parameters_references
 
+class AddConstant():
+    
+    def __init__(self, ModelClass):
+        self.ModelClass = ModelClass
+
+    def make_model(self, **independent_var): 
+        return GenericModel(self.model_function(**independent_var), missing='drop', name=self.ModelClass.__class__.__name__)
+
+    def model_function(self, **independent_var):
+        return self.add_constant(**independent_var)    
+
+    def make_parameters(self):
+        pars = self.ModelClass.make_parameters()
+        pars.add(
+            'offset', 
+            **self.model_parameters.get('offset', {'value': 0, 'vary': True})
+            )
+        return pars     
+
+    def add_constant(self, **independent_var): 
+        pass
+     
+class Linearize():
+    
+    def __init__(self, ModelClass):
+        self.ModelClass = ModelClass
+
+    def make_model(self, **independent_var): 
+        return GenericModel(self.model_function(**independent_var), missing='drop', name=self.ModelClass.__class__.__name__)
+
+    def model_function(self, **independent_var):
+        return self.composite(**independent_var)
+         
+    def make_parameters(self):
+        nonlinear_params = self.ModelClass.make_parameters()
+        linear_params = Linear(self.model_components, self.model_parameters).make_parameters()
+        for param_name, param in linear_params.items():
+            nonlinear_params.add(
+            param_name,
+            value=param.value,
+            vary=param.vary,
+            min=param.min,
+            max=param.max,
+            expr=param.expr)
+        
+        return nonlinear_params
+    
+    def composite(self, **independent_var):
+        linear_func=Linear.linear
+        nonlinear_func=self.ModelClass.model_function(**independent_var)        
+        def inner_composite(**params):          
+            nonlinear_params = {
+                key: params[key] for key in params.keys() if (
+                    key.startswith('tau') or key.startswith('shift')
+                    )
+                    }
+            linear_params = {
+                key: params[key] for key in params.keys() if (
+                    key.startswith('amplitude') or key.startswith('offset')
+                    )
+                    } 
+            return linear_func(nonlinear_func(**nonlinear_params))(**linear_params)
+
+        return inner_composite
+ 
+    def __getattr__(self, attr):
+        return getattr(self.ModelClass, attr)
+
 class Convolve():
 
     def __init__(self, ModelClass):
@@ -190,7 +258,6 @@ class Exponential(Model):
             return np.exp(-time[:, None] / taus[None, :])
         return inner_exponential
 
-
 class Linear(Model):
     
     def model_function(self, independent_var):
@@ -217,53 +284,6 @@ class Linear(Model):
             amplitudes = np.asarray(list(linear_params.values())) # may fail if not sorted
             return independent_var.dot(amplitudes) + offset
         return inner_linear
-
-class Linearize():
-    
-    def __init__(self, ModelClass):
-        self.ModelClass = ModelClass
-
-    def make_model(self, **independent_var): 
-        return GenericModel(self.model_function(**independent_var), missing='drop', name=self.ModelClass.__class__.__name__)
-
-    def model_function(self, **independent_var):
-        return self.composite(
-    linear_func=Linear.linear, 
-    nonlinear_func=self.ModelClass.model_function(**independent_var))
-         
-    def make_parameters(self):
-        nonlinear_params = self.ModelClass.make_parameters()
-        linear_params = Linear(self.model_components, self.model_parameters).make_parameters()
-        for param_name, param in linear_params.items():
-            nonlinear_params.add(
-            param_name,
-            value=param.value,
-            vary=param.vary,
-            min=param.min,
-            max=param.max,
-            expr=param.expr)
-        
-        return nonlinear_params
-    
-    @staticmethod
-    def composite(linear_func, nonlinear_func):
-        def inner_composite(**params):          
-            nonlinear_params = {
-                key: params[key] for key in params.keys() if (
-                    key.startswith('tau') or key.startswith('shift')
-                    )
-                    }
-            linear_params = {
-                key: params[key] for key in params.keys() if (
-                    key.startswith('amplitude') or key.startswith('offset')
-                    )
-                    } 
-            return linear_func(nonlinear_func(**nonlinear_params))(**linear_params)
-
-        return inner_composite
- 
-    def __getattr__(self, attr):
-        return getattr(self.ModelClass, attr)
 
 
 class GenericModel(lmfit.Model):
