@@ -186,8 +186,9 @@ class Linearize():
 
 class Convolve():
 
-    def __init__(self, ModelClass):
+    def __init__(self, ModelClass, convolution_method='discrete'):
         self.ModelClass = ModelClass
+        self.convolution_method = convolution_method
 
     def make_model(self, **independent_var): 
         name = '{} convolved wtih instrument response'.format(self.ModelClass.__class__.__name__)
@@ -219,10 +220,19 @@ class Convolve():
             to_convolve_with = self.ModelClass.model_function(**independent_var)(**params)      
             convolved = np.zeros(to_convolve_with.shape)
             for i in range(to_convolve_with.shape[1]):
-                convolved[:, i] = self.convolve(shifted_instrument_response, to_convolve_with[:, i])
+                convolved[:, i] = self._allowed_convolutions[self.convolution_method](shifted_instrument_response, to_convolve_with[:, i])
             return convolved
 
         return inner_convolved_exponential
+
+    @property
+    def _allowed_convolutions(self):
+        return dict(
+                discrete=self.convolve,
+                monte_carlo=self.monte_carlo_convolve
+                )
+
+         
 
     @staticmethod
     def shift_decay(time, intensity, shift):
@@ -240,6 +250,50 @@ class Convolve():
     @staticmethod
     def convolve(left, right):
         return np.convolve(left, right, mode='full')[:len(right)]
+    
+    @staticmethod
+    def monte_carlo_convolve(left, right, peak_cnts=None, verbose=True):
+        """
+        Compute Monte Carlo convolution.
+
+        Parameters
+        ----------
+        left : ndarray
+            1D array
+        right : ndarray
+            1D array (should be the same length as `left`).
+        peak_cnts : int, optional
+            By default max of `left`.
+        verbose : bool
+            Print simulation progress.
+
+        Returns
+        -------
+        list
+            Convolution using Monte Carlo method.
+        """
+        left_max = np.max(left)
+        P_left = list(left/left_max)  # probability distribution of left scalled to 1
+        X_max = len(P_left)-1
+        P_right = list(right/np.max(right))  # probability distribution of right scalled to 1
+        print()
+        print('[[Wait until Monte Carlo simulation is done. It may take some time.]]')
+        print()
+        MC_convolution = [0] * len(P_left)
+        if peak_cnts == None:
+            peak_cnts = left_max
+        else:
+            peak_cnts = int(peak_cnts)
+        while (max(MC_convolution) < peak_cnts): # stops when peak_counts is reached
+            if verbose:
+                print('Peak counts\t: {}'.format(max(MC_convolution)))
+            X_left = draw_from_probability_distribution(P_left)
+            X_right = draw_from_probability_distribution(P_right)
+            X_drawn = X_left + X_right  # draw channel number
+            if X_drawn <= X_max:  # channel must be in range
+                MC_convolution[X_drawn] += 1  # add count in channel
+        return MC_convolution
+
 
     def __getattr__(self, attr):
         return getattr(self.ModelClass, attr)
@@ -311,3 +365,29 @@ class GenericModel(lmfit.Model):
         return super().fit(data, params, weights, method,
             iter_cb, scale_covar, verbose, fit_kws,
             **kwargs)
+
+
+def draw_from_probability_distribution(distribution):
+    """
+    Draw from arbitrary distribution using acceptance-rejection method.
+
+    Parameters
+    ----------
+    distribution : list
+        List with probabalities distribution (scalled to 1).
+
+    Returns
+    -------
+    int
+        Drawn channel's index.
+    """
+    x_max = len(distribution)-1
+    y_min = min(distribution)
+
+    accepted = False
+    while (not accepted):
+        x_random = random.randint(0, x_max)
+        y_random = random.uniform(y_min, 1.)
+        if y_random <= distribution[x_random]:
+            accepted = True
+            return x_random
