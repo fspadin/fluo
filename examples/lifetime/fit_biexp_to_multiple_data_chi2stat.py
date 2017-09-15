@@ -44,7 +44,7 @@ def main():
         )
     chi2stat_fit_global = chi2stat_fitter_global.fit()
     local_indexes = chi2stat_fitter_global.local_indexes
-    local_best_fits = np.split(chi2stat_fit_global.best_fit, local_indexes)
+    local_best_fits = np.split(chi2stat_fit_global.best_fit, local_indexes) # split global best_fit into local ones
     # plot
     for ith, (time, decay, irf) in enumerate(zip(local_times, local_decays,local_irfs)):
         plt.plot(time, decay, 'bo', label='decay')
