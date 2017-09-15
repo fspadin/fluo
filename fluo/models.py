@@ -11,6 +11,7 @@ import scipy
 import scipy.interpolate
 import lmfit  
 import random
+import tqdm
 
 class Model(): 
     """Wrapper around fluo.GenericModel.
@@ -473,14 +474,17 @@ class Convolve():
             peak_cnts = left_max
         else:
             peak_cnts = int(peak_cnts)
+        progress_bar = tqdm.tqdm(total=peak_cnts+1)
         while (max(MC_convolution) <= peak_cnts): # stops when peak_counts is reached
-            if verbose:
-                print('Peak counts\t: {}'.format(max(MC_convolution)))
+            last_iter_max = max(MC_convolution)
             X_left = draw_from_probability_distribution(P_left)
             X_right = draw_from_probability_distribution(P_right)
             X_drawn = X_left + X_right  # draw channel number
             if X_drawn <= X_max:  # channel must be in range
                 MC_convolution[X_drawn] += 1  # add count in channel
+            if verbose:
+                progress_bar.update(max(MC_convolution)-last_iter_max)
+        progress_bar.close()
         return np.asarray(MC_convolution)
 
     def __getattr__(self, attr):

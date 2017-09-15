@@ -24,5 +24,6 @@ setup(
         'numpy >= 1.12.1',
         'matplotlib >= 1.5.1',
         'scipy >= 0.18.1',
-        'lmfit >= 0.9.5'],
+        'lmfit >= 0.9.5',
+        'tqdm >= 4.15.0'],
 )
