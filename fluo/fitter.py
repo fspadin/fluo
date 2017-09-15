@@ -95,7 +95,7 @@ def make_global_lifetime_fitter(
         local_instrument_responses
         )
     local_fitter_classes = [
-        make_lifetime_fitter(*args) for args in local_zipped
+        make_lifetime_fitter(*args, fit_statistic) for args in local_zipped
     ]
 
     global_pre_fitter_cls = GlobalModel(
@@ -178,27 +178,22 @@ def make_lifetime_fitter(
     decay = decay[range_mask].astype(float)
     time = time[range_mask].astype(float)
 
-    if instrument_response is None:
-        exponential_cls = Exponential(**user_kwargs)
-        independent_var = dict(
-            time=time
-        )
-    else:
-        exponential_cls = Convolve(Exponential(**user_kwargs))
+    exponential_cls = Exponential(**user_kwargs)
+    independent_var = dict(
+        time=time
+    )
+
+    if instrument_response is not None:
+        exponential_cls = Convolve(exponential_cls)
         instrument_response = instrument_response[range_mask].astype(float)
         independent_var = dict(
             time=time, 
             instrument_response=instrument_response
-            )
+            )        
 
     if isinstance(
         statistic_cls, 
         ChiSquareStatisticVariableProjection):  
-        # pre_fitter_cls = Linear(user_kwargs)
-        #     independent_var = dict(
-        #         independent_var = 
-        #     )
-        #     statistic_cls = ChiSquareStatistic()      
         return Fitter(
             ModelClass=exponential_cls,
             independent_var=independent_var, 
@@ -216,6 +211,8 @@ def make_lifetime_fitter(
 
 class Fitter(): 
     """Fitter object for fitting.
+
+    Wraps fluo.Model.
 
     Parameters
     ----------
@@ -274,6 +271,8 @@ class Fitter():
             report_fit(result)
         return result
 
+    def __getattr__(self, attr):
+        return getattr(self.ModelClass, attr)
 
 def autocorrelation(residuals):
     """Calculates residuals autocorrelation.

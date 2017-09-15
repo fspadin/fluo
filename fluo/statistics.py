@@ -82,8 +82,7 @@ class CStatistic(Statistic):
         model_copy = np.copy(model)
         dependent_var_copy = np.copy(dependent_var)        
         if np.sum(model < 0):
-            warnings.warn("Negative values in model. The C statistic do not comprehend negative values in model. The negative values excluded from fit.")
-            model_copy[model < 0] = np.abs(model[model < 0])  
+            warnings.warn("Negative values in model. The C statistic do not comprehend negative values in model. Make sure the parameters are constrained in such a way that the model is not negative-valued anywhere.")
         dependent_var_copy[dependent_var == 0] = np.nan
         result = dependent_var_copy * np.log(model_copy / dependent_var_copy)
         res = -2*(result + (dependent_var_copy - model_copy))
