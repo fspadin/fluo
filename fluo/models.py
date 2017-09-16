@@ -8,13 +8,12 @@ Statistic object in fit.
 
 """
 
-from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
+import random
 import numpy as np
 import scipy
 import scipy.interpolate
 import lmfit
-import random
 import tqdm
 
 class Model():
@@ -100,8 +99,8 @@ class GlobalModel(Model):
     ----------
     name : str
     local_independent_var : list of dict
-        Independent variables for a local model evaluation. Dict with names of independent variables encoded by keys (str)
-        and values as ndarrays.
+        Independent variables for a local model evaluation. Dict with names
+        of independent variables encoded by keys (str) and values as ndarrays.
     local_dependent_var : list of ndarray
         List of 1D ndarrays with dependent variable for fitting.
     local_indexes : ndarray
@@ -135,13 +134,17 @@ class GlobalModel(Model):
             self.shared = []
         self.name = '{}({})'.format(
             self.__class__.__name__,
-            fitter_classes[0].model_class.name # name in every Fitter class should be the same
+            # name in every Fitter class should be the same
+            fitter_classes[0].model_class.name
             )
         self.local_independent_var = self.make_local_atrribute(fitter_classes, 'independent_var')
         self.local_dependent_var = self.make_local_atrribute(fitter_classes, 'dependent_var')
         self.local_indexes = self._make_local_indexes(self.local_dependent_var)
-        self.statistic = fitter_classes[0].statistic # statistic in every Fitter class should be the same
-        self._local_parameters = self.make_local_atrribute(fitter_classes, 'parameters')
+        # statistic in every Fitter class should be the same
+        self.statistic = fitter_classes[0].statistic
+        self._local_parameters = self.make_local_atrribute(
+            fitter_classes,
+            'parameters')
         self._parameters, self._parameters_references = self._glue_parameters()
 
     def _model_function(self, **independent_var):
@@ -166,14 +169,15 @@ class GlobalModel(Model):
             List with independent_var for local Model evaluations.
 
         """
-        print(independent_var)
         def _inner_global_eval(**params):
             for name, value in params.items():
                 fitter_i, local_name = self._parameters_references[name]
                 self._local_parameters[fitter_i][local_name].value = value
             _global_eval = []
             for i, local_fitter in enumerate(self.fitter_classes):
-                model_i = local_fitter.model_class.make_model(**independent_var[i])
+                model_i = local_fitter.model_class.make_model(
+                    **independent_var[i]
+                    )
                 local_eval = model_i.eval(**self._local_parameters[i])
                 _global_eval.append(local_eval)
             return np.concatenate(_global_eval)
@@ -195,7 +199,8 @@ class GlobalModel(Model):
                                expr=param.expr)
         for param_name, param in all_params.items():
             for constraint in self.shared:
-                if param_name.startswith(constraint) and not param_name.endswith('_file1'):
+                if param_name.startswith(constraint) and \
+                not param_name.endswith('_file1'):
                     param.expr = constraint + '_file1'
         return all_params, _parameters_references
 
@@ -306,7 +311,8 @@ class AddConstant():
 class Linearize():
     """Linear combination of a Model.
 
-    Wrapper around fluo.Model. Makes dot product of a Model and linear coeficients. Utilizes Linear class.
+    Wrapper around fluo.Model. Makes dot product of a Model and linear
+    coeficients. Utilizes Linear class.
 
     Parameters
     ----------
@@ -367,12 +373,13 @@ class Linearize():
         linear_params = Linear(self.model_components, self.model_parameters).make_parameters()
         for param_name, param in linear_params.items():
             nonlinear_params.add(
-            param_name,
-            value=param.value,
-            vary=param.vary,
-            min=param.min,
-            max=param.max,
-            expr=param.expr)
+                param_name,
+                value=param.value,
+                vary=param.vary,
+                min=param.min,
+                max=param.max,
+                expr=param.expr
+                )
 
         return nonlinear_params
 
@@ -385,13 +392,15 @@ class Linearize():
                 key: params[key] for key in params.keys() if (
                     key.startswith('tau') or key.startswith('shift')
                     )
-                    }
+                }
             linear_params = {
                 key: params[key] for key in params.keys() if (
                     key.startswith('amplitude')
                     )
-                    }
-            return linear_func(nonlinear_model.eval(**nonlinear_params))(**linear_params)
+                }
+            return linear_func(
+                nonlinear_model.eval(**nonlinear_params)
+                )(**linear_params)
 
         return _inner_composite
 
@@ -408,7 +417,8 @@ class Convolve():
     ----------
     model_class : fluo.Model
     convolution_method : str, optional
-        'discrete' by default. Accepts the following str: 'discrete', 'monte_carlo' (for Monte Carlo convolution).
+        'discrete' by default. Accepts the following str: 'discrete',
+        'monte_carlo' (for Monte Carlo convolution).
 
     Methods
     -------
@@ -427,7 +437,8 @@ class Convolve():
         ----------
         model_class : fluo.Model
         convolution_method : str, optional
-            'discrete' by default. Accepts the following str: 'discrete', 'monte_carlo' (for Monte Carlo convolution).
+            'discrete' by default. Accepts the following str: 'discrete',
+            'monte_carlo' (for Monte Carlo convolution).
 
         """
         self.model_class = model_class
@@ -451,7 +462,11 @@ class Convolve():
         -------
         fluo.GenericModel
         """
-        return GenericModel(self._model_function(**independent_var), missing='drop', name=self.name)
+        return GenericModel(
+            self._model_function(**independent_var),
+            missing='drop',
+            name=self.name
+            )
 
     def _model_function(self, **independent_var):
         """Make a function for `fluo.GenericModel`."""
@@ -492,7 +507,11 @@ class Convolve():
             try:
                 convolved = np.zeros(to_convolve_with.shape)
                 for i in range(*nrows):
-                    convolved[:, i] = self.__convolve(shifted_instrument_response, to_convolve_with[:, i], **self.convolution_kwargs)
+                    convolved[:, i] = self.__convolve(
+                        shifted_instrument_response,
+                        to_convolve_with[:, i],
+                        **self.convolution_kwargs
+                        )
             except TypeError:
                 convolved = self.__convolve(
                     shifted_instrument_response,
@@ -505,9 +524,9 @@ class Convolve():
     def _allowed_convolutions(self):
         """Allowed convolution methods."""
         return dict(
-                discrete=self.convolve,
-                monte_carlo=self.monte_carlo_convolve
-                )
+            discrete=self.convolve,
+            monte_carlo=self.monte_carlo_convolve
+            )
 
     @staticmethod
     def shift_decay(x_var, y_var, shift):
@@ -555,7 +574,8 @@ class Convolve():
     def monte_carlo_convolve(left, right, peak_cnts=None, verbose=True):
         """Monte Carlo convolution of `left` with `right`.
 
-        Simulates distorted fluorescence decay distorted by instrument response with Poisson distributed observed values.
+        Simulates distorted fluorescence decay distorted by instrument
+        response with Poisson distributed observed values.
 
         Parameters
         ----------
@@ -574,29 +594,31 @@ class Convolve():
 
         """
         left_max = np.max(left)
-        P_left = list(left/left_max)  # probability distribution of left scalled to 1
-        X_max = len(P_left)-1
-        P_right = list(right/np.max(right))  # probability distribution of right scalled to 1
+        # probability distribution of left scalled to 1
+        probability_left = list(left/left_max)
+        index_max = len(probability_left)-1
+        # probability distribution of right scalled to 1
+        probability_right = list(right/np.max(right))
         print()
-        print('[[Wait until Monte Carlo simulation is done. It may take some time.]]')
+        print('[[Wait until simulation is done. It may take some time.]]')
         print()
-        MC_convolution = [0] * len(P_left)
+        monte_carlo_convolution = [0] * len(probability_left)
         if peak_cnts == None:
             peak_cnts = left_max
         else:
             peak_cnts = int(peak_cnts)
         progress_bar = tqdm.tqdm(total=peak_cnts+1)
-        while (max(MC_convolution) <= peak_cnts): # stops when peak_counts is reached
-            last_iter_max = max(MC_convolution)
-            X_left = draw_from_probability_distribution(P_left)
-            X_right = draw_from_probability_distribution(P_right)
-            X_drawn = X_left + X_right  # draw channel number
-            if X_drawn <= X_max:  # channel must be in range
-                MC_convolution[X_drawn] += 1  # add count in channel
+        while max(monte_carlo_convolution) <= peak_cnts: # stops when peak_counts is reached
+            last_iter_max = max(monte_carlo_convolution)
+            index_left = draw_from_probability_distribution(probability_left)
+            index_right = draw_from_probability_distribution(probability_right)
+            index_drawn = index_left + index_right  # draw channel number
+            if index_drawn <= index_max:  # channel must be in range
+                monte_carlo_convolution[index_drawn] += 1  # add count in channel
             if verbose:
-                progress_bar.update(max(MC_convolution)-last_iter_max)
+                progress_bar.update(max(monte_carlo_convolution)-last_iter_max)
         progress_bar.close()
-        return np.asarray(MC_convolution)
+        return np.asarray(monte_carlo_convolution)
 
     def __getattr__(self, atrribute):
         """Return attribute from `model_class`."""
@@ -641,7 +663,10 @@ class Exponential(Model):
         for i in range(self.model_components):
             nonlinear_pars.add(
                 'tau{}'.format(i+1),
-                **self.model_parameters.get('tau{}'.format(i+1), {'value': 1, 'vary': True, 'min': 1E-6})
+                **self.model_parameters.get(
+                    'tau{}'.format(i+1),
+                    {'value': 1, 'vary': True, 'min': 1E-6}
+                    )
                 )
         return nonlinear_pars
 
@@ -693,8 +718,11 @@ class Linear(Model):
         linear_pars = lmfit.Parameters()
         for i in range(self.model_components):
             linear_pars.add(
-               'amplitude{}'.format(i+1),
-                **self.model_parameters.get('amplitude{}'.format(i+1), {'value': 0.5, 'vary': True})
+                'amplitude{}'.format(i+1),
+                **self.model_parameters.get(
+                    'amplitude{}'.format(i+1),
+                    {'value': 0.5, 'vary': True}
+                )
             )
         return linear_pars
 
@@ -710,7 +738,8 @@ class Linear(Model):
         Returns
         -------
         ndarray
-            1D ndarray with dot product of an independent variable and linear coeficients.
+            1D ndarray with dot product of an independent variable and
+            linear coeficients.
 
         """
         def inner_linear(**amplitudes):
@@ -733,14 +762,15 @@ class GenericModel(lmfit.Model):
         Overrides `lmfit.Model` __init__ to introduce fluo.Statistic.
 
         """
-        super().__init__(func, independent_vars, param_names,
-                 missing, prefix, name, **kws)
+        super().__init__(func, independent_vars, param_names, missing, prefix,
+        name, **kws)
         self._statistic = None
 
     def _residual(self, params, data, weights, **kwargs):
         """Return the residual.
 
-        Overrides `lmfit.Model` _residual to introduce fluo.Statistic. The definition of residual funtion is provided by Statistic object.
+        Overrides `lmfit.Model` _residual to introduce fluo.Statistic.
+        The definition of residual funtion is provided by Statistic object.
 
         """
         model = self.eval(params, **kwargs)
@@ -782,9 +812,8 @@ class GenericModel(lmfit.Model):
         self._statistic = statistic
         method = self._statistic.optimization_method
         weights = None
-        return super().fit(data, params, weights, method,
-            iter_cb, scale_covar, verbose, fit_kws,
-            **kwargs)
+        return super().fit(data, params, weights, method, iter_cb, scale_covar,
+    verbose, fit_kws, **kwargs)
 
 
 def draw_from_probability_distribution(distribution):
@@ -805,7 +834,7 @@ def draw_from_probability_distribution(distribution):
     y_min = min(distribution)
 
     accepted = False
-    while (not accepted):
+    while not accepted:
         x_random = random.randint(0, x_max)
         y_random = random.uniform(y_min, 1.)
         if y_random <= distribution[x_random]:
