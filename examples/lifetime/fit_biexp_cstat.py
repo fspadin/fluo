@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-"""Example of fitting a convolved bi-exponential fluorescence decay to
-a single measurement using C Statistic."""
+"""Fit a bi-exponential decay.
+
+Example of fitting a convolved bi-exponential fluorescence
+decay to a single measurement using C Statistic.
+
+"""
+
 from fluo.fitter import make_lifetime_fitter
 from matplotlib import pyplot as plt
 import numpy as np
 np.set_printoptions(threshold=np.nan)
 
 def main():
+    """Illustrate workflow for fitting a bi-exponential decay.
+
+    Example of fitting a convolved bi-exponential fluorescence
+    decay to a single measurement using C Statistic.
+
+    """
     file = np.loadtxt('../decay_2exp_1ns_02_4ns_08.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
     model_kwargs_e2 = {

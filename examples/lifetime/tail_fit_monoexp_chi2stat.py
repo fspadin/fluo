@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-"""Tail-fitting a mono-exponential decay.
+"""Tail-fit a mono-exponential decay.
 
-Example of tail fitting a mono-exponential fluorescence
+Example of tail-fitting a mono-exponential fluorescence
 decay to a single measurement using Chi2 Statistic.
+
 """
+
 from fluo.fitter import make_lifetime_fitter
 from matplotlib import pyplot as plt
 import numpy as np
 np.set_printoptions(threshold=np.nan)
 
 def main():
+    """Illustrate workflow for tail-fitting a mono-exponential decay.
+
+    Example of tail-fitting a mono-exponential fluorescence
+    decay to a single measurement using Chi2 Statistic.
+
+    """
     file = np.loadtxt('../decay_1exp_5ns.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
     model_kwargs_e1_tail = {

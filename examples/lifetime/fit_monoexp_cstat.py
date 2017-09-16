@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-"""Fitting a mono-exponential decay.
+"""Fit a mono-exponential decay.
 
 Example of fitting a convolved mono-exponential fluorescence
 decay to a single measurement using C Statistic.
+
 """
+
 from fluo.fitter import make_lifetime_fitter
 from matplotlib import pyplot as plt
 import numpy as np
 np.set_printoptions(threshold=np.nan)
 
 def main():
+    """Illustrate workflow for fitting a mono-exponential decay.
+
+    Example of fitting a convolved mono-exponential fluorescence
+    decay to a single measurement using C Statistic.
+
+    """
     file = np.loadtxt('../decay_1exp_5ns.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
     model_kwargs_e1 = {

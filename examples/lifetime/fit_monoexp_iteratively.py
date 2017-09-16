@@ -3,7 +3,11 @@
 # -*- coding: utf-8 -*-
 """Iterative least squares.
 
-Module with example of fitting lifetimes to single measurements of fluorescence decay using iterative least squares. This method should elimate the bias introduced by fitting using Gaussian distribution. For comparison the fit using C Statistic is included.
+Example of fitting a convolved mono-exponential fluorescence decay to single
+measurements of using iterative least squares. This method should elimate
+the bias introduced by fitting using Gaussian distribution. For a comparison,
+the fit using C Statistic is included.
+
 """
 from fluo.fitter import make_lifetime_fitter, iterative_least_squares
 from matplotlib import pyplot as plt
@@ -12,6 +16,13 @@ CMAP = plt.get_cmap('gist_rainbow')
 np.set_printoptions(threshold=np.nan)
 
 def main():
+    """Illustrate workflow for fitting a mono-exponential decay.
+
+    Example of fitting a convolved mono-exponential fluorescence
+    decay to a single measurement using iterative least squares
+    with Chi2 Statistic and Pearson variance approximation.
+
+    """
     file = np.loadtxt('../decay_1exp_5ns.txt', skiprows=1)
     time, irf, decay = file[:, 0], file[:, 1], file[:, 2]
     model_kwargs_e1 = {

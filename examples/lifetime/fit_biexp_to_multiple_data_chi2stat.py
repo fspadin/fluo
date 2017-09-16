@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-"""Simultaneous fitting (global analysis).
+"""Fit simultaneously (global analysis).
 
-Example of simultaneously fitting a convolved bi-exponential fluorescence
-decay to two measurements using Chi2 Statistic.
+Example of fitting a convolved bi-exponential fluorescence
+decay simultaneously to two measurements using Chi2 Statistic.
+
 """
+
 from fluo.fitter import make_global_lifetime_fitter
 from matplotlib import pyplot as plt
 import numpy as np
 np.set_printoptions(threshold=np.nan)
 
 def main():
+    """Illustrate workflow for fitting a bi-exponential decay.
+
+    Example of fitting a convolved bi-exponential fluorescence
+    decay simultaneously to two measurement using Chi2 Statistic.
+
+    """
     file1 = np.loadtxt('../decay_2exp_1ns_02_4ns_08.txt', skiprows=1)
     file2 = np.loadtxt('../decay_2exp_1ns_01_4ns_09.txt', skiprows=1)
     local_times = [file1[:, 0], file2[:, 0]]
