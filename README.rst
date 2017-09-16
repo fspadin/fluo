@@ -2,7 +2,8 @@
 fluo
 ====
 
-**fluo** is a set of tools for analysis of fluorescence measurements in time-domain mode. 
+**fluo** is a set of tools for analysis of fluorescence measurements in
+time-domain mode.
 
 :Author: Anna Chmielińska, <anna.chmielinska@uj.edu.pl>.
 
@@ -13,7 +14,7 @@ Installation
 * Via `pip`::
 
     pip install fluo
-    
+
 * Via `setuptools`::
 
     python3 setup.py
@@ -29,5 +30,5 @@ fluo requires installation of the following software:
 Usage
 =====
 
-Check out workflow examples are in `examples` folder.
-
+**fluo** bundles python objects for construction models and fitting them to
+measured data. Check out workflow examples are in `examples` folder.
