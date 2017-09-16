@@ -1,39 +1,40 @@
 # -*- coding: utf-8 -*-
 
-"""
-Module with a Fitter object and factory functions for fitting lifetimes to measurements of fluorescence decay.
+"""Provide Fitter object and factory functions to make it.
+
+Fitter is a composition of objects need to evaluate a model: Model, Parameters,
+independent variables. It also stores other objects need to perform a fit:
+dependent variable and Statistic.
+
 """
 
+import itertools
 import numpy as np
 from lmfit import report_fit
-import itertools
 from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
 from .models import GlobalModel, AddConstant, Linearize, Convolve, Exponential
 
+def iterative_least_squares(fitter_class, iterations):
+    """Least squares in a loop.
 
-def iterative_least_squares(FitterClass, iterations):
-    """Performs least squares in a loop.
-
-    Performs least squares minimization in iterations, 
-    with initial parameters values from previous iteration 
-    and variance approximation according to Pearson 
+    Perform least squares minimization in iterations,
+    with initial parameters values from previous iteration
+    and variance approximation according to Pearson
     (based on fitted model).
 
     Parameters
     ----------
-    FitterClass : fluo.Fitter
+    fitter_class : fluo.Fitter
     iterations : int
 
     Returns
     -------
     fits : list of lmfit.ModelResult
         List with fit from every iteration.
-    """
 
-    print(
-        "0-th iteration. Initial fit."
-        )
-    ini_fit = FitterClass.fit(report=True)
+    """
+    print("0-th iteration. Initial fit.")
+    ini_fit = fitter_class.fit(report=True)
     i_params = ini_fit.params
     fits = [ini_fit]
     for i in range(iterations):
@@ -41,23 +42,19 @@ def iterative_least_squares(FitterClass, iterations):
         print(
             "{}-th iteration".format(i+1)
             )
-        FitterClass.statistic = ChiSquareStatistic(variance_approximation='Pearson')
-        FitterClass.parameters = i_params
-        i_fit = FitterClass.fit(report=True)
+        fitter_class.statistic = ChiSquareStatistic(
+            variance_approximation='Pearson'
+            )
+        fitter_class.parameters = i_params
+        i_fit = fitter_class.fit(report=True)
         i_params = i_fit.params
         fits.append(i_fit)
     return fits
 
-def make_global_lifetime_fitter(
-    local_user_kwargs, 
-    local_times, 
-    local_decays, 
-    local_instrument_responses=None, 
-    fit_statistic='c_statistic', 
-    shared=None):
-    """Makes a fitter for simultaneous (global) fitting.
 
-    Makes `fluo.Fitter` object for simultaneous (global) fitting multiple measurements.
+def make_global_lifetime_fitter(local_user_kwargs, local_times, local_decays,
+    local_instrument_responses=None, fit_statistic='c_statistic', shared=None):
+    """Make a Fitter for simultaneous (global) fitting to multiple measurements.
 
     Parameters
     ----------
@@ -68,11 +65,11 @@ def make_global_lifetime_fitter(
     local_decays : list of ndarray
         List of 1D ndarray with fluorescence decays (y-scale of data).
     local_instrument_responses : list of ndarray, optional
-        List of 1D ndarray with instrument_response functions 
+        List of 1D ndarray with instrument_response functions
         (for convolution with calculated model).
     fit_statistic : str, optional
-        Statisic used in fitting minimization. 
-        Accepts the following str: 'c_statistic', 'chi_square_statistic', 
+        Statisic used in fitting minimization.
+        Accepts the following str: 'c_statistic', 'chi_square_statistic',
         'chi_square_statistic_variable_projection'.
     shared : list of str, optional
         List of parameters names shared between fitted measurements.
@@ -85,45 +82,42 @@ def make_global_lifetime_fitter(
     Returns
     -------
     fluo.Fitter
+
     """
+    # making local_instrument_responses good for zipping if None
     if local_instrument_responses is None:
         local_instrument_responses = iter([])
     local_zipped = itertools.zip_longest(
-        local_user_kwargs, 
-        local_times, 
-        local_decays, 
+        local_user_kwargs,
+        local_times,
+        local_decays,
         local_instrument_responses
         )
+    # making local Fitter objects
     local_fitter_classes = [
         make_lifetime_fitter(*args, fit_statistic) for args in local_zipped
     ]
-
+    # gluing it together
     global_pre_fitter_cls = GlobalModel(
-        FitterClasses=local_fitter_classes, 
+        fitter_classes=local_fitter_classes,
         shared=shared)
     independent_var = dict(
-        independent_var = global_pre_fitter_cls.local_independent_var
+        independent_var=global_pre_fitter_cls.local_independent_var
         )
     dependent_var = np.concatenate(global_pre_fitter_cls.local_dependent_var)
     statistic_cls = global_pre_fitter_cls.statistic
 
     return Fitter(
-            ModelClass=global_pre_fitter_cls, 
-            independent_var=independent_var, 
+            model_class=global_pre_fitter_cls,
+            independent_var=independent_var,
             dependent_var=dependent_var,
             statistic=statistic_cls
     )
 
 
-def make_lifetime_fitter(
-    user_kwargs, 
-    time, 
-    decay, 
-    instrument_response=None, 
+def make_lifetime_fitter(user_kwargs, time, decay, instrument_response=None,
     fit_statistic='c_statistic'):
-    """Makes a fitter.
-
-    Makes `fluo.Fitter` object for fitting a single measurement.
+    """Make a Fitter for fitting to a single measurement.
 
     Parameters
     ----------
@@ -134,11 +128,11 @@ def make_lifetime_fitter(
     decay : ndarray
         1D ndarray with fluorescence decays (y-scale of data).
     instrument_response : ndarray, optional
-        1D ndarray with instrument_response functions 
+        1D ndarray with instrument_response functions
         (for convolution with calculated model).
     fit_statistic : str, optional
-        Statisic used in fitting minimization. 
-        Accepts the following str: 'c_statistic', 'chi_square_statistic', 
+        Statisic used in fitting minimization.
+        Accepts the following str: 'c_statistic', 'chi_square_statistic',
         'chi_square_statistic_variable_projection'.
 
     Raises
@@ -149,27 +143,32 @@ def make_lifetime_fitter(
     Returns
     -------
     fluo.Fitter
-    """
-    
-    allowed_fit_statistics = dict(
-    c_statistic = CStatistic(),
-    chi_square_statistic = ChiSquareStatistic(),
-    chi_square_statistic_variable_projection = ChiSquareStatisticVariableProjection()
-    )
 
+    """
+    # making allowed statistic class
+    allowed_fit_statistics = dict(
+        c_statistic=CStatistic(),
+        chi_square_statistic=ChiSquareStatistic(),
+        chi_square_statistic_variable_projection=\
+        ChiSquareStatisticVariableProjection()
+        )
     try:
         statistic_cls = allowed_fit_statistics[fit_statistic]
     except KeyError:
-        allowed_fit_statistics_names = ", ".join(list(allowed_fit_statistics.keys()))
+        allowed_fit_statistics_names = ", ".join(
+            list(
+                allowed_fit_statistics.keys()
+                )
+                )
         raise ValueError(
             "fit_statistic: '{0}' not implemented. Available fit_statistic: {1}".format(
-                fit_statistic, 
+                fit_statistic,
                 allowed_fit_statistics_names)
-        )
-
+                )
     # pre-process fit range
     user_kwargs = user_kwargs.copy()
-    fit_start, fit_stop = user_kwargs.pop('fit_start'), user_kwargs.pop('fit_stop')
+    fit_start = user_kwargs.pop('fit_start')
+    fit_stop = user_kwargs.pop('fit_stop')
     if fit_start is None:
         fit_start = 0
     if fit_stop is None:
@@ -177,50 +176,48 @@ def make_lifetime_fitter(
     range_mask = (time >= fit_start) & (time <= fit_stop)
     decay = decay[range_mask].astype(float)
     time = time[range_mask].astype(float)
-
+    independent_var = dict(time=time)
+    # making exponential_cls
     exponential_cls = Exponential(**user_kwargs)
-    independent_var = dict(
-        time=time
-    )
-
+    # checking if tail-fit or convolution-fti
     if instrument_response is not None:
         exponential_cls = Convolve(exponential_cls)
-        instrument_response = instrument_response[range_mask].astype(float)
-        independent_var = dict(
-            time=time, 
-            instrument_response=instrument_response
-            )        
-
+        independent_var['instrument_response'] = \
+        instrument_response[range_mask].astype(float)
+    # checking if VarPro
     if isinstance(
-        statistic_cls, 
-        ChiSquareStatisticVariableProjection):  
+        statistic_cls,
+        ChiSquareStatisticVariableProjection):
         return Fitter(
-            ModelClass=exponential_cls,
-            independent_var=independent_var, 
+            model_class=exponential_cls,
+            independent_var=independent_var,
             dependent_var=decay,
             statistic=statistic_cls
             )
-    else:
-        return Fitter(
-            ModelClass=AddConstant(Linearize(exponential_cls)),
-            independent_var=independent_var, 
-            dependent_var=decay,
-            statistic=statistic_cls
-        )
+
+    return Fitter(
+        model_class=AddConstant(Linearize(exponential_cls)),
+        independent_var=independent_var,
+        dependent_var=decay,
+        statistic=statistic_cls
+    )
 
 
-class Fitter(): 
-    """Fitter object for fitting.
+class Fitter():
+    """Fitter object.
 
-    Wraps fluo.Model.
+    Fitter is a composition of objects need to evaluate a model. It wraps
+    `fluo.Model`, makes `lmfit.Parameters`, containes independent variables.
+    It also stores other objects need to perform a fit: dependent variable and
+    `fluo.Statistic`.
 
     Parameters
     ----------
-    ModelClass : fluo.Model
+    model_class : fluo.Model
         Model class inheriting from fluo.Model
     independent_var : dict
-        Independent variables for a model evaluation. Dict with names of independent variables encoded by keys (str)
-        and values as ndarrays.
+        Independent variables for a model evaluation. Dict with names of
+        independent variables encoded by keys (str) and values as ndarrays.
     dependent_var : ndarray
         1D ndarray with dependent variable for fitting.
     statistic : fluo.Statistic
@@ -235,18 +232,35 @@ class Fitter():
     Methods
     -------
     fit : lmfit.ModelResult
+
     """
 
-    def __init__(self, ModelClass, independent_var, dependent_var, statistic):
-        self.ModelClass = ModelClass
+    def __init__(self, model_class, independent_var, dependent_var, statistic):
+        """Initialize Fitter object.
+
+        Parameters
+        ----------
+        model_class : fluo.Model
+            Model class inheriting from fluo.Model
+        independent_var : dict
+            Independent variables for a model evaluation. Dict with names of
+            independent variables encoded by keys (str) and values as ndarrays.
+        dependent_var : ndarray
+            1D ndarray with dependent variable for fitting.
+        statistic : fluo.Statistic
+            Statistic class for fitting.
+
+        """
+        self.model_class = model_class
         self.independent_var = independent_var
         self.dependent_var = dependent_var
-        self.statistic = statistic 
-        self.parameters = ModelClass.make_parameters()
-        self.model = ModelClass.make_model(**independent_var)
-                
+        self.statistic = statistic
+        self.name = ''
+        self.parameters = model_class.make_parameters()
+        self.model = model_class.make_model(**independent_var)
+
     def fit(self, report=True):
-        """Performes a fit.
+        """Perform a fit.
 
         Parameters
         ----------
@@ -272,12 +286,14 @@ class Fitter():
         return result
 
     def __getattr__(self, attr):
-        return getattr(self.ModelClass, attr)
+        """Return attribute from `model_class`."""
+        return getattr(self.model_class, attr)
 
 def autocorrelation(residuals):
-    """Calculates residuals autocorrelation.
+    """Calculate residuals autocorrelation.
 
-    Calculates correlation between residuals in i-th and (i+j)-th channels.
+    Residuals autocorrelation is a correlation between residuals in i-th and
+    (i+j)-th channels.
 
     Parameters
     ----------
@@ -286,19 +302,19 @@ def autocorrelation(residuals):
     Returns
     -------
     ndarray
-    """
 
+    """
     residuals_full = residuals
     residuals = residuals[~np.isnan(residuals)]
-    n = len(residuals)
-    inv_n = 1. / n
-    denominator = inv_n * np.sum(np.square(
-        residuals))  # normalization weight in autocorrelation function
+    residuals_len = len(residuals)
+    inv_n = 1. / residuals_len
+    # normalization weight in autocorrelation function
+    denominator = inv_n * np.sum(np.square(residuals))
     residuals = list(residuals)
-    m = n // 2
+    autocorr_len = residuals_len // 2
     numerator = []
-    for j in range(m):
-        k = n - j
+    for j in range(autocorr_len):
+        k = residuals_len - j
         numerator_sum = 0.0
         for i in range(k):
             numerator_sum += residuals[i] * residuals[i + j]
