@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""
-Factory function for simulating a measurement of fluorescence decay.
-"""
+"""Provide the function simulating a measurement of fluorescence decay."""
 
-import numpy as np
 from .models import AddConstant, Linearize, Convolve, Exponential
 
 def make_simulation(user_kwargs, time, instrument_response, peak_cnts=None, verbose=True):
-    """Simulates measured fluorescence decay distorted by the instrument response.
+    """Simulate fluorescence decay distorted by the instrument response.
 
-    Simulates fluorescence decay distorted by the instrument response with Poisson-distributed observed values using Monte Carlo method
+    Fluorescence decay distorted by the instrument response is calulated
+    using Monte Carlo method.
 
     Parameters
     ----------
@@ -19,8 +17,8 @@ def make_simulation(user_kwargs, time, instrument_response, peak_cnts=None, verb
     time : ndarray
         1D ndarray with times (x-scale of data).
     instrument_response : ndarray
-        1D ndarray with instrument_response functions 
-        (for convolution with calculated model).
+        1D ndarray with instrument_response functions (for convolution with
+        calculated model).
     peak_cnts : int, optional
         Counts in maximum (by default max of `instrument_response`).
     verbose : bool
@@ -29,17 +27,18 @@ def make_simulation(user_kwargs, time, instrument_response, peak_cnts=None, verb
     Returns
     -------
     ndarray
+
     """
     independent_var = dict(
-                time=time, 
-                instrument_response=instrument_response
-                )
+        time=time,
+        instrument_response=instrument_response
+        )
     # make model
-    ModelClass = Convolve(
+    model_class = Convolve(
         AddConstant(Linearize(Exponential(**user_kwargs))),
         convolution_method='monte_carlo',
         peak_cnts=peak_cnts,
         verbose=verbose
         )
-    model = ModelClass.make_model(**independent_var)
-    return model.eval(**ModelClass.make_parameters())
+    model = model_class.make_model(**independent_var)
+    return model.eval(**model_class.make_parameters())
