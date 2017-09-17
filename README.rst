@@ -11,13 +11,9 @@ time-domain mode.
 Installation
 ============
 
-* Via `pip`::
-
-    pip install fluo
-
 * Via `setuptools`::
 
-    python3 setup.py
+    python3 -m setup.py
 
 fluo requires installation of the following software:
 
