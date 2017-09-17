@@ -72,13 +72,13 @@ class CStatistic(Statistic):
 
     _allowed_optimization_methods = ['nelder', 'powell']
 
-    def __init__(self, optimization_method='nelder'):
+    def __init__(self, optimization_method='powell'):
         """Initialize the Statistic object.
 
         Parameters
         ----------
         optimization_method : str, optional
-            'nelder' by default. Accepts the following str: 'nelder', 'powell'.
+            'powell' by default. Accepts the following str: 'nelder', 'powell'.
 
         """
         if optimization_method not in self._allowed_optimization_methods:
