@@ -300,9 +300,11 @@ class Fitter():
             ith / sum(amplitudes)  for ith in amplitudes
         ]
         for ith, amp in enumerate(norm_amplitudes):
-                result.params.add('amplitude{}_norm'.format(ith+1), value = amp)
+                result.params.add('amplitude{}_scaled'.format(ith+1), value = amp)
+                result.params['amplitude{}_scaled'.format(ith+1)].init_value = None
         for ith, frac in enumerate(fractions):
             result.params.add('fraction{}'.format(ith+1), value = frac)
+            result.params['fraction{}'.format(ith+1)].init_value = None
         if report:
             print('Report: {}'.format(self.name))
             report_fit(result)
