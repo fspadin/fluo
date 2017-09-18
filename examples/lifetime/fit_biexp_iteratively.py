@@ -40,9 +40,22 @@ def main():
         'fit_stop': None
     }
     # ConvolutionFitter C Statistic for comparison
+    model_kwargs_e2_cstat = {
+        'model_components': 2,
+        'model_parameters': {
+            'amplitude1': {'value': 0.5, 'vary': True, 'min': 1E-6},
+            'amplitude2': {'value': 0.5, 'vary': True, 'min': 1E-6},
+            'tau1': {'value': 1, 'vary': True, 'min': 1E-6},
+            'tau2': {'value': 5, 'vary': True, 'min': 1E-6},
+            'offset': {'value': 0.1, 'vary': True, 'min': 1E-6},
+            'shift': {'value': 1, 'vary': True}
+        },
+        'fit_start': 2,
+        'fit_stop': None
+    }
     cstat_fitter = \
     make_lifetime_fitter(
-        model_kwargs_e2,
+        model_kwargs_e2_cstat,
         time,
         decay,
         instrument_response=irf,
@@ -58,7 +71,7 @@ def main():
         instrument_response=irf,
         fit_statistic='chi_square_statistic'
         )
-    n_iter = 20
+    n_iter = 5
     fits = iterative_least_squares(chi2stat_fitter, n_iter)
     # plot
     plt.plot(time, decay, 'bo', label='decay')
