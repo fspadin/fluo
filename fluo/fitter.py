@@ -281,12 +281,12 @@ class Fitter():
             params=self.parameters
             )
         amplitudes = [
-            result.params[key] for key in result.params.keys() if (
+            result.params[key] for key in result.params if (
                 key.startswith('amplitude')
             )
         ]
         taus = [
-            result.params[key] for key in result.params.keys() if (
+            result.params[key] for key in result.params if (
                 key.startswith('tau')
             )
         ]
@@ -294,18 +294,19 @@ class Fitter():
             amp*tau for amp, tau in zip(amplitudes, taus)
         ]
         fractions = [
-        ith / sum(amplitudes_mul_taus)  for ith in amplitudes_mul_taus
+            ith / sum(amplitudes_mul_taus)  for ith in amplitudes_mul_taus
         ]
         norm_amplitudes = [
             ith / sum(amplitudes)  for ith in amplitudes
         ]
         for ith, amp in enumerate(norm_amplitudes):
-                result.params.add('amplitude{}_scaled'.format(ith+1), value = amp)
-                result.params['amplitude{}_scaled'.format(ith+1)].init_value = None
+            result.params.add('scaled_amplitude{}'.format(ith+1), value=amp)
+            result.params['scaled_amplitude{}'.format(ith+1)].init_value = None
         for ith, frac in enumerate(fractions):
-            result.params.add('fraction{}'.format(ith+1), value = frac)
+            result.params.add('fraction{}'.format(ith+1), value=frac)
             result.params['fraction{}'.format(ith+1)].init_value = None
         if report:
+            print()
             print('Report: {}'.format(self.name))
             report_fit(result)
         return result
