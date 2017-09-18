@@ -280,6 +280,29 @@ class Fitter():
                     statistic=self.statistic,
                     params=self.parameters
                     )
+        amplitudes = [
+            result.params[key] for key in result.params.keys() if (
+                key.startswith('amplitude')
+            )
+        ]
+        taus = [
+            result.params[key] for key in result.params.keys() if (
+                key.startswith('tau')
+            )
+        ]
+        amplitudes_mul_taus = [
+            amp*tau for amp, tau in zip(amplitudes, taus)
+        ]
+        fractions = [
+        ith / sum(amplitudes_mul_taus)  for ith in amplitudes_mul_taus
+        ]
+        norm_amplitudes = [
+            ith / sum(amplitudes)  for ith in amplitudes
+        ]
+        for ith, amp in enumerate(norm_amplitudes):
+                result.params.add('norm_amplitude{}'.format(ith+1), value = amp)
+        for ith, frac in enumerate(fractions):
+            result.params.add('fraction{}'.format(ith+1), value = frac)
         if report:
             print('Report: {}'.format(self.name))
             report_fit(result)
