@@ -276,10 +276,10 @@ class Fitter():
             self.model.name,
             self.statistic.name)
         result = self.model.generic_fit(
-                    data=self.dependent_var,
-                    statistic=self.statistic,
-                    params=self.parameters
-                    )
+            data=self.dependent_var,
+            statistic=self.statistic,
+            params=self.parameters
+            )
         amplitudes = [
             result.params[key] for key in result.params.keys() if (
                 key.startswith('amplitude')
@@ -300,7 +300,7 @@ class Fitter():
             ith / sum(amplitudes)  for ith in amplitudes
         ]
         for ith, amp in enumerate(norm_amplitudes):
-                result.params.add('norm_amplitude{}'.format(ith+1), value = amp)
+                result.params.add('amplitude{}_norm'.format(ith+1), value = amp)
         for ith, frac in enumerate(fractions):
             result.params.add('fraction{}'.format(ith+1), value = frac)
         if report:
