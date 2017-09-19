@@ -8,11 +8,13 @@ dependent variable and Statistic.
 
 """
 
+import re
 import itertools
 import numpy as np
-from lmfit import report_fit
+from lmfit import Parameters, report_fit
 from .statistics import CStatistic, ChiSquareStatistic, ChiSquareStatisticVariableProjection
 from .models import GlobalModel, AddConstant, Linearize, Convolve, Exponential
+from .utils import process_amplitudes, pretty_print_dictionary
 
 def iterative_least_squares(fitter_class, iterations):
     """Least squares in a loop.
@@ -280,40 +282,33 @@ class Fitter():
             statistic=self.statistic,
             params=self.parameters
             )
-        amplitudes = [
-            result.params[key] for key in result.params if (
-                key.startswith('amplitude')
-            )
-        ]
-        taus = [
-            result.params[key] for key in result.params if (
-                key.startswith('tau')
-            )
-        ]
-        amplitudes_mul_taus = [
-            amp*tau for amp, tau in zip(amplitudes, taus)
-        ]
-        fractions = [
-            ith / sum(amplitudes_mul_taus)  for ith in amplitudes_mul_taus
-        ]
-        norm_amplitudes = [
-            ith / sum(amplitudes)  for ith in amplitudes
-        ]
-        for ith, amp in enumerate(norm_amplitudes):
-            result.params.add('scaled_amplitude{}'.format(ith+1), value=amp)
-            result.params['scaled_amplitude{}'.format(ith+1)].init_value = None
-        for ith, frac in enumerate(fractions):
-            result.params.add('fraction{}'.format(ith+1), value=frac)
-            result.params['fraction{}'.format(ith+1)].init_value = None
         if report:
             print()
             print('Report: {}'.format(self.name))
             report_fit(result)
+            print('[[Scaled Variables]]')
+            try:
+                pattern_file = re.compile('file[0-9]+')
+                found_pattern = set(
+                    pattern_file.search(key).group() for key in result.best_values
+                )
+                splited_params = []
+                for file in found_pattern:
+                    splited_params.append(
+                        {
+                        key:result.best_values[key] for key in result.best_values if key.endswith(file)
+                    }
+                    )
+            except AttributeError:
+                splited_params = [result.best_values]
+            for params in splited_params:
+                pretty_print_dictionary(process_amplitudes(params))
         return result
 
     def __getattr__(self, attr):
         """Return attribute from `model_class`."""
         return getattr(self.model_class, attr)
+
 
 def autocorrelation(residuals):
     """Calculate residuals autocorrelation.
