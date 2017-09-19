@@ -19,9 +19,9 @@ setup(
     long_description=open(join(dirname(__file__), 'README.rst')).read(),
     packages = find_packages(),
     install_requires=[
-        'numpy >= 1.12.1',
-        'matplotlib >= 1.5.1',
-        'scipy >= 0.18.1',
-        'lmfit >= 0.9.5',
+        'numpy >= 1.13.1',
+        'matplotlib >= 2.0.2',
+        'scipy >= 0.19.1',
+        'lmfit >= 0.9.7',
         'tqdm >= 4.15.0'],
 )
