@@ -25,9 +25,9 @@ def main():
     model_kwargs_e1_tail = {
         'model_components': 1,
         'model_parameters': {
-            'amplitude1': {'value': 7000, 'vary': True},
-            'offset': {'value': 0.1, 'vary': True},
-            'tau1': {'value': 5, 'vary': True},
+            'amplitude1': {'value': 7000, 'vary': True, 'min': 1E-6},
+            'offset': {'value': 0.1, 'vary': True, 'min': 1E-6},
+            'tau1': {'value': 5, 'vary': True, 'min': 1E-6},
         },
         'fit_start': 12,
         'fit_stop': None

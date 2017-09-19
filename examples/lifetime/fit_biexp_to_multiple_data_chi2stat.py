@@ -28,12 +28,12 @@ def main():
     model_kwargs_e2 = {
         'model_components': 2,
         'model_parameters': {
-            'amplitude1': {'value': 0.15, 'vary': True, 'min': 1E-6},
-            'amplitude2': {'value': 0.85, 'vary': True, 'min': 1E-6},
-            'tau1': {'value': 1, 'vary': False, 'min': 1E-6},
-            'tau2': {'value': 4, 'vary': False, 'min': 1E-6},
-            'offset': {'value': 0.1, 'vary': True, 'min': 1E-6},
-            'shift': {'value': 1, 'vary': True}
+            'amplitude1': {'value': 0.1, 'vary': True, 'min': 1E-6},
+            'amplitude2': {'value': 0.1, 'vary': True, 'min': 1E-6},
+            'tau1': {'value': 1, 'vary': True, 'min': 1E-6},
+            'tau2': {'value': 5, 'vary': True, 'min': 1E-6},
+            'offset': {'value': 0.1, 'vary': True},
+            'shift': {'value': 0.5, 'vary': True}
         },
         'fit_start': 2,
         'fit_stop': None
