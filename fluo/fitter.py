@@ -35,8 +35,12 @@ def iterative_least_squares(fitter_class, iterations):
         List with fit from every iteration.
 
     """
-    print("0-th iteration. Initial fit.")
-    ini_fit = fitter_class.fit(report=True)
+    print("0-th iteration. Initial fit (rough estimation).")
+    # less strict tolerances for initial fit
+    ini_fit = fitter_class.fit(
+        report=True,
+        fit_kws=dict(ftol=1e-4, xtol=1e-4)
+        )
     i_params = ini_fit.params
     fits = [ini_fit]
     for i in range(iterations):
@@ -48,7 +52,10 @@ def iterative_least_squares(fitter_class, iterations):
             variance_approximation='Pearson'
             )
         fitter_class.parameters = i_params
-        i_fit = fitter_class.fit(report=True)
+        i_fit = fitter_class.fit(
+            report=True,
+            fit_kws=dict(ftol=1e-6, xtol=1e-6)
+            )
         i_params = i_fit.params
         fits.append(i_fit)
     return fits
