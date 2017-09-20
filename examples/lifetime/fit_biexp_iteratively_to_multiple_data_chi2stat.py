@@ -40,9 +40,8 @@ def main():
         'fit_stop': None
     }
     local_model_kwargs_e2 = [
-        model_kwargs_e2,
         model_kwargs_e2.copy()
-        ]
+        ] * 2
     # Global convolution fit with Chi2 Statistic
     chi2stat_fitter_global = \
     make_global_lifetime_fitter(
@@ -53,27 +52,27 @@ def main():
         fit_statistic='chi_square_statistic',
         shared=['tau1', 'tau2']
         )
-    n_iter = 5
-    global_fits = iterative_least_squares(chi2stat_fitter_global, n_iter)
-
-    # chi2stat_fit_global = chi2stat_fitter_global.fit()
-    # local_indexes = chi2stat_fitter_global.local_indexes
-    # local_best_fits = np.split(
-    #     chi2stat_fit_global.best_fit,
-    #     local_indexes
-    #     ) # split global best_fit into local ones
-    # # plot
-    # for ith, (time, decay, irf) in enumerate(zip(local_times,local_decays,local_irfs)):
-    #     plt.plot(time, decay, 'bo', label='decay')
-    #     plt.plot(time, irf, 'go', label='irf')
-    #     plt.plot(
-    #         chi2stat_fitter_global.local_independent_var[ith]['time'],
-    #         local_best_fits[ith],
-    #         'r-',
-    #         label='fit')
-    #     plt.legend(loc='best')
-    #     plt.yscale('log')
-    #     plt.show()
+    n_iter = 2
+    i_global_fits = iterative_least_squares(chi2stat_fitter_global, n_iter)
+    local_indexes = chi2stat_fitter_global.local_indexes
+    # plot
+    for ith_file, (time, decay, irf) in enumerate(zip(local_times,local_decays,local_irfs)):
+        plt.plot(time, decay, 'bo', label='decay')
+        plt.plot(time, irf, 'go', label='irf')
+        for ith_iter, i_global_fit in enumerate(i_global_fits):
+            local_best_fits = np.split(
+                i_global_fit.best_fit,
+                local_indexes
+                ) # split global best_fit into local ones
+            plt.plot(
+                chi2stat_fitter_global.local_independent_var[ith_file]['time'],
+                local_best_fits[ith_file],
+                label='{}-ith iter fit'.format(ith_iter),
+                color=CMAP(ith_iter / n_iter)
+            )
+        plt.legend(loc='best')
+        plt.yscale('log')
+        plt.show()
 
 if __name__ == "__main__":
     main()
