@@ -13,11 +13,11 @@ Installation
 
 * Via `pip`::
 
-    python3 -m pip install fluo
+    python3.6 -m pip install fluo
 
 * Via `setuptools`::
 
-    python3 -m setup.py
+    python3.6 setup.py install
 
 fluo requires installation of the following software:
 
