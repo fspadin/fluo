@@ -110,10 +110,10 @@ def make_global_lifetime_fitter(local_user_kwargs, local_times, local_decays,
     statistic_cls = global_pre_fitter_cls.statistic
 
     return Fitter(
-            model_class=global_pre_fitter_cls,
-            independent_var=independent_var,
-            dependent_var=dependent_var,
-            statistic=statistic_cls
+        model_class=global_pre_fitter_cls,
+        independent_var=independent_var,
+        dependent_var=dependent_var,
+        statistic=statistic_cls
     )
 
 
@@ -261,13 +261,15 @@ class Fitter():
         self.parameters = model_class.make_parameters()
         self.model = model_class.make_model(**independent_var)
 
-    def fit(self, report=True):
+    def fit(self, report=True, fit_kws=None):
         """Perform a fit.
 
         Parameters
         ----------
         report : bool, optional
             Report fit (True by default).
+        fit_kws : dict, optional
+            Options to pass to the minimizer being used.
 
         Returns
         -------
@@ -280,7 +282,8 @@ class Fitter():
         result = self.model.generic_fit(
             data=self.dependent_var,
             statistic=self.statistic,
-            params=self.parameters
+            params=self.parameters,
+            fit_kws=fit_kws
             )
         if report:
             print()
