@@ -27,6 +27,8 @@ def iterative_least_squares(fitter_class, iterations):
     Parameters
     ----------
     fitter_class : fluo.Fitter
+        Fitter for initial fit, which provides starting parameters values and
+        model values for variance approximation in (Pearson weights).
     iterations : int
 
     Returns
